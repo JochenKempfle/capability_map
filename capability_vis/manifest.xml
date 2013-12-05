@@ -1,0 +1,17 @@
+<package>
+  <description brief="capability_vis">
+
+     capability_vis
+
+  </description>
+  <author>Jochen</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/capability_vis</url>
+  <depend package="roscpp"/>
+  <depend package="capability_map"/>
+  <depend package="visualization_msgs"/>
+
+</package>
+
+

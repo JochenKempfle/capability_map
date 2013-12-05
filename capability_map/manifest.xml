@@ -1,0 +1,17 @@
+<package>
+  <description brief="capability_map">
+
+     capability_map
+
+  </description>
+  <author>Jochen</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/capability_map</url>
+  <depend package="roscpp"/>
+  <depend package="octomap"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+

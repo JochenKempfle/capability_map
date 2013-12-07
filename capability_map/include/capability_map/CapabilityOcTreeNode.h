@@ -27,6 +27,11 @@ enum CAPABILITY_TYPE
  *           x      x           -->   x  x _.-"                                                           *-----*           *
  *             x  x                    x.-"                                                                                 *
  *                                                                                                                          *
+ *                                                                                                                          *
+ * Direction of phi/theta:                                                                                                  *
+ *                                                                                                                 ,^.      *
+ *             NONE                  phi/theta: -->                    phi/theta: -->                   phi/theta:  |       *
+ *                                                                                                                  |       *
  ***************************************************************************************************************************/
 
 
@@ -37,12 +42,12 @@ class Capability
 
     FRIEND_TEST(Capability, constructor);
 
-    Capability() : _type(EMPTY), _phi(0.0f), _theta(0.0f), _openingAngle(0.0f) { }
-    Capability(CAPABILITY_TYPE type, double phi, double theta, double openingAngle)
-               : _type(type), _phi(phi), _theta(theta), _openingAngle(openingAngle) { }
+    Capability() : _type(EMPTY), _phi(0.0), _theta(0.0), _halfOpeningAngle(0.0) { }
+    Capability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle)
+               : _type(type), _phi(phi), _theta(theta), _halfOpeningAngle(halfOpeningAngle) { assert(theta <= 180.0); }
 
     // TODO: are setter and getter needed? Uncomment if yes.
-    /*
+    
     void setType(CAPABILITY_TYPE type) { _type = type; }
     CAPABILITY_TYPE getType() const { return _type; }
 
@@ -50,24 +55,25 @@ class Capability
     double getPhi() const { return _phi; }
     double getTheta() const { return _theta; }
 
-    void setOpeningAngle(double openingAngle) { _openingAngle = openingAngle; }
-    double getOpeningAngle() const { return _openingAngle; }
-    */
-
-    // TODO: implement isDirectionPossible (maybe rename function)
-    bool isDirectionPossible(double phi, double theta) const;
-
+    void setOpeningAngle(double halfOpeningAngle) { _halfOpeningAngle = halfOpeningAngle; }
+    double getOpeningAngle() const { return _halfOpeningAngle; }
+    
 
     FRIEND_TEST(Capability, equalityOperators);
 
     inline bool operator==(const Capability &other) const
     {
-        return (_type == other._type && _phi == other._phi && _theta == other._theta && _openingAngle == other._openingAngle);
+        return (_type == other._type && _phi == other._phi && _theta == other._theta && _halfOpeningAngle == other._halfOpeningAngle);
     }
     inline bool operator!=(const Capability &other) const
     {
-        return (_type != other._type || _phi != other._phi || _theta != other._theta || _openingAngle != other._openingAngle);
+        return (_type != other._type || _phi != other._phi || _theta != other._theta || _halfOpeningAngle != other._halfOpeningAngle);
     }
+
+    FRIEND_TEST(Capability, isDirectionPossible);
+
+    // test if a specific direction is possible with this capability's configuration
+    bool isDirectionPossible(double phi, double theta) const;
 
   protected:
 
@@ -75,8 +81,8 @@ class Capability
     CAPABILITY_TYPE _type;
     // the direction of the capability shape in sphere coordinates
     double _phi, _theta;
-    // _openingAngle is the half opening angle of a cone or the height of a cylinder
-    double _openingAngle;
+    // _halfOpeningAngle is the half opening angle of a cone or the height of a cylinder
+    double _halfOpeningAngle;
 };
 
 
@@ -86,12 +92,13 @@ class CapabilityOcTreeNode : public OcTreeDataNode<Capability>
 
     FRIEND_TEST(CapabilityOcTreeNode, constructor);
 
+    // Constructors
     CapabilityOcTreeNode();
     CapabilityOcTreeNode(Capability capability);
+    CapabilityOcTreeNode(const CapabilityOcTreeNode &rhs) : OcTreeDataNode<Capability>(rhs) { }
 
     ~CapabilityOcTreeNode();
 
-    CapabilityOcTreeNode(const CapabilityOcTreeNode &rhs) : OcTreeDataNode<Capability>(rhs) { }
 
     FRIEND_TEST(CapabilityOcTreeNode, equalityOperator);
 
@@ -117,21 +124,23 @@ class CapabilityOcTreeNode : public OcTreeDataNode<Capability>
     }
 
 
-    // TODO: not really needed, node only gets pruned when value is equal for all children
-    bool collapsible() { return false; }
-    bool pruneNode() { return false; }
-    void expandNode() { }
+    // TODO: should not be overwritten, node only gets pruned when value is equal for all children (uncomment if problems arise)
+    // bool collapsible() { return false; }
+    // bool pruneNode() { return false; }
+    // void expandNode() { }
 
     FRIEND_TEST(CapabilityOcTreeNode, set_getCapability);
 
-    inline Capability getCapability() const { return value; }
+    // setter/getter for Capability (value derived from OcTreeDataNode)
     inline void setCapability(Capability capability) { value = capability; }
-    inline void setCapability(CAPABILITY_TYPE type, double phi, double theta, double openingAngle)
+    inline void setCapability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle)
     {
-        value = Capability(type, phi, theta, openingAngle);
+        value = Capability(type, phi, theta, halfOpeningAngle);
     }
 
-    // TODO: needed? If yes, uncomment
+    inline Capability getCapability() const { return value; }
+
+    // TODO: is isCapabilitySet() needed? If yes, uncomment
     // has a capability been set?
     /*
     inline bool isCapabilitySet() const
@@ -140,16 +149,10 @@ class CapabilityOcTreeNode : public OcTreeDataNode<Capability>
     }
     */
 
-    // void updateCapabilityChildren();
-
-
-    // file I/O (should be covered by base class)
+    // file I/O (derived by base class), uncomment/implement if specific file I/O is needed
     // std::istream& readValue (std::istream &s);
     // std::ostream& writeValue(std::ostream &s) const;
 
-  protected:
-
-    // Capability value;
 };
 
 #endif // CAPABILITYOCTREENODE_H

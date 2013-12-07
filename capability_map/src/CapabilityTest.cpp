@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include <gtest/gtest.h>
 #include "./../include/capability_map/CapabilityOcTreeNode.h"
 #include "./../include/capability_map/CapabilityOcTree.h"
@@ -6,24 +6,25 @@
 
 TEST(Capability, constructor)
 {
+    // check if constructors do their job
     Capability cap1;
 
     ASSERT_TRUE(EMPTY == cap1._type);
     ASSERT_TRUE(0.0 == cap1._phi);
     ASSERT_TRUE(0.0 == cap1._theta);
-    ASSERT_TRUE(0.0 == cap1._openingAngle);
-
+    ASSERT_TRUE(0.0 == cap1._halfOpeningAngle);
 
     Capability cap2(SPHERE, 0.1, 0.2, 0.3);
 
     ASSERT_TRUE(SPHERE == cap2._type);
     ASSERT_TRUE(0.1 == cap2._phi);
     ASSERT_TRUE(0.2 == cap2._theta);
-    ASSERT_TRUE(0.3 == cap2._openingAngle);
+    ASSERT_TRUE(0.3 == cap2._halfOpeningAngle);
 }
 
 TEST(Capability, equalityOperators)
 {
+    // test equality operators with various kinds of data
     Capability cap1(SPHERE, 0.1, 0.2, 0.3);
     Capability cap2(SPHERE, 0.1, 0.2, 0.3);
     Capability cap3(SPHERE, 0.0, 0.1, 0.2);
@@ -41,9 +42,148 @@ TEST(Capability, equalityOperators)
     ASSERT_TRUE(cap4 != cap5);
 }
 
+TEST(Capability, isDirectionPossible)
+{
+    // test isDirectionPossible() with all kinds of capabilities (rounding errors are considered)
+
+    // test empty capability (expect false for all directions)
+    Capability emptyCap(EMPTY, 0.0, 0.0, 0.0);
+
+    ASSERT_FALSE(emptyCap.isDirectionPossible(0.0, 0.0));
+    ASSERT_FALSE(emptyCap.isDirectionPossible(5.0, 10.0));
+
+    // test sphere-like capability (expect true for all directions)
+    Capability sphereCap(SPHERE, 0.0, 0.0, 0.0);
+
+    ASSERT_TRUE(sphereCap.isDirectionPossible(0.0, 0.0));
+    ASSERT_TRUE(sphereCap.isDirectionPossible(5.0, 10.0));
+
+    // test cone-like capability (expect true if direction lies inside cone, false otherwise)
+    Capability coneCap(CONE, 10.0, 30.0, 20.01);
+    Capability coneCap2(CONE, 0.0, 90.0, 20.01);
+
+    // test "inside corners"
+    ASSERT_TRUE(coneCap.isDirectionPossible(10.0, 10.0));
+    ASSERT_TRUE(coneCap.isDirectionPossible(10.0, 50.0));
+    ASSERT_TRUE(coneCap.isDirectionPossible(30.0, 30.0));
+    ASSERT_TRUE(coneCap.isDirectionPossible(350.0, 30.0));
+    // test phi with theta = 90° rotated cone
+    ASSERT_TRUE(coneCap2.isDirectionPossible(20.0, 90.0));
+    ASSERT_TRUE(coneCap2.isDirectionPossible(340.01, 90.0));
+    // test inside
+    ASSERT_TRUE(coneCap.isDirectionPossible(10.0, 30.0));
+    ASSERT_TRUE(coneCap.isDirectionPossible(20.0, 40.0));
+    ASSERT_TRUE(coneCap.isDirectionPossible(0.0, 20.0));
+    // test "outside corners"
+    ASSERT_FALSE(coneCap.isDirectionPossible(10.0, 50.02));
+    ASSERT_FALSE(coneCap.isDirectionPossible(10.0, 9.98));
+    // test phi with theta = 90° rotated coneCap2
+    ASSERT_FALSE(coneCap2.isDirectionPossible(20.02, 90.0));
+    ASSERT_FALSE(coneCap2.isDirectionPossible(339.98, 90.0));
+    // test outside
+    ASSERT_FALSE(coneCap.isDirectionPossible(90.0, 90.0));
+    ASSERT_FALSE(coneCap.isDirectionPossible(240.0, 160.0));
+
+    // test cylinder_1-like capability (expect true if direction lies inside cylinder, false otherwise)
+    Capability cylinder1Cap(CYLINDER_1, 30.0, 60.0, 20.01);
+
+    // test "inside corners"
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(30.0, 40.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(30.0, 80.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(10.0, 60.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(50.0, 60.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(210.0, 140.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(210.0, 100.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(190.0, 120.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(230.0, 120.0));
+    // test inside cylinder
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(30.0, 60.0));
+    ASSERT_TRUE(cylinder1Cap.isDirectionPossible(210.0, 120.0));
+    // test phi and theta themself lie inside cylinder, but not combined as direction (corners)
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(50.0, 140.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(50.0, 100.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(10.0, 140.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(10.0, 100.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(230.0, 40.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(230.0, 80.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(190.0, 40.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(190.0, 80.0));
+    // test phi and theta themself lie inside cylinder, but not combined as direction
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(30.0, 120.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(210.0, 60.0));
+    // test "outside corners"
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(9.98, 39.98));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(9.98, 80.02));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(50.02, 39.98));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(50.02, 80.02));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(189.98, 99.98));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(189.98, 140.02));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(230.02, 99.98));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(230.02, 140.02));
+    // test outside
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(90.0, 90.0));
+    ASSERT_FALSE(cylinder1Cap.isDirectionPossible(300.0, 150.0));
+
+    // test cylinder_2-like capability (expect true if direction lies inside cylinder, false otherwise)
+    Capability cylinder2Cap(CYLINDER_2, 0.0, 0.0, 20.01);
+
+    // test various "inside corners"
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(0.0, 70.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(0.0, 110.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(50.0, 70.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(90.0, 110.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(130.0, 70.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(190.0, 110.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(250.0, 70.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(310.0, 110.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(350.0, 70.0));
+    // test inside
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(0.0, 80.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(110.0, 90.0));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(220.0, 98.765));
+    ASSERT_TRUE(cylinder2Cap.isDirectionPossible(330.0, 100.0));
+    // test "outside corners"
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(0.0, 69.98));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(0.0, 110.02));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(110.0, 69.98));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(220.0, 110.02));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(330.0, 69.98));
+    // test outside
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(0.0, 0.0));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(20.0, 0.0));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(0.0, 20.0));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(50.0, 50.0));
+    ASSERT_FALSE(cylinder2Cap.isDirectionPossible(320.0, 150.0));
+
+    // test rotated cylinder_2-like capability (expect true if direction lies inside cylinder, false otherwise)
+    Capability rotCylinder2Cap(CYLINDER_2, 0.0, 20.0, 20.01);
+
+    // only test some special cases
+    // test "inside corners"
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(0.0, 90.0));
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(0.0, 130.0));
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(180.0, 50.0));
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(180.0, 90.0));
+    // test inside
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(0.0, 110.0));
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(10.0, 100.0));
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(180.0, 70.0));
+    ASSERT_TRUE(rotCylinder2Cap.isDirectionPossible(190.0, 60.0));
+    // test "outside corners"
+    ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(0.0, 89.98));
+    ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(0.0, 130.02));
+    ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(180.0, 49.98));
+    ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(180.0, 90.02));
+    // test outside
+    ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(0.0, 0.0));
+    ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(0.0, 180.0));
+    ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(50.0, 10.0));
+}
+
 
 TEST(CapabilityOcTreeNode, constructor)
 {
+    // check if constructors do their job
     Capability emptyCap(EMPTY, 0.0, 0.0, 0.0);
     Capability sphereCap(SPHERE, 0.1, 0.2, 0.3);
 
@@ -55,14 +195,11 @@ TEST(CapabilityOcTreeNode, constructor)
     ASSERT_TRUE(emptyCap == node1.getCapability());
     ASSERT_TRUE(sphereCap == node2.getCapability());
     ASSERT_TRUE(sphereCap == node3.getCapability());
-
-    //ASSERT_EQ(emptyCap, node1.getCapability());
-    //ASSERT_EQ(sphereCap, node2.getCapability());
-    //ASSERT_EQ(sphereCap, node3.getCapability());
 }
 
 TEST(CapabilityOcTreeNode, equalityOperator)
 {
+    // test operator== with various kinds of data
     CapabilityOcTreeNode node1(Capability(CYLINDER_1, 0.2, 0.3, 0.1));
     CapabilityOcTreeNode node2(Capability(CYLINDER_1, 0.2, 0.3, 0.1));
     CapabilityOcTreeNode node3(Capability(CYLINDER_2, 0.3, 0.1, 0.2));
@@ -93,6 +230,7 @@ TEST(CapabilityOcTreeNode, children)
 
 TEST(CapabilityOcTreeNode, set_getCapability)
 {
+    // test set and get functions of CapabilityOcTreeNode
     Capability cap(CYLINDER_2, 0.4, 0.0, 1.2);
     CapabilityOcTreeNode node1;
     CapabilityOcTreeNode node2;
@@ -102,25 +240,70 @@ TEST(CapabilityOcTreeNode, set_getCapability)
 
     ASSERT_TRUE(cap == node1.getCapability());
     ASSERT_TRUE(cap == node2.getCapability());
-
-    //ASSERT_EQ(cap, node1.getCapability());
-    //ASSERT_EQ(cap, node2.getCapability());
 }
 
 
-TEST(CapabilityOcTreeTest, constructor)
+TEST(CapabilityOcTree, constructor)
 {
+    // does the constructor construct a CapabilityOcTree?
     CapabilityOcTree tree(0.1);
     ASSERT_EQ("CapabilityOcTree", tree.getTreeType());
 }
 
-TEST(CapabilityOcTreeTest, set_getNodeCapability)
+TEST(CapabilityOcTree, set_getNodeCapability)
 {
-    CapabilityOcTree tree(0.1);
-    tree.setNodeCapability(1, 1, 1, SPHERE, 0.1, 0.1, 0.1);
+    // test set and get functions of CapabilityOcTree
+    Capability emptyCap;
+    Capability cap1(SPHERE, 0.1, 0.1, 0.1);
+    Capability cap2(CONE, 0.2, 0.2, 0.2);
+    Capability cap3(CYLINDER_1, 0.3, 0.3, 0.3);
+    Capability cap4(CYLINDER_2, 0.4, 0.4, 0.4);
 
-    // TODO: test has no meaning for now
-    ASSERT_EQ(1, 1);
+    CapabilityOcTreeNode* testNode = NULL;
+
+    CapabilityOcTree tree(0.1);
+    testNode = tree.setNodeCapability(1.0, 1.0, 1.0, SPHERE, 0.1, 0.1, 0.1);  // == cap1
+    ASSERT_FALSE(testNode == NULL);
+    
+    tree.setNodeCapability(1.0, 1.0, 2.0, Capability(CONE, 0.2, 0.2, 0.2));  // == cap2
+    ASSERT_FALSE(testNode == NULL);
+    
+    tree.setNodeCapability(1.2, 1.0, 1.0, cap3);
+    ASSERT_FALSE(testNode == NULL);
+    
+    tree.setNodeCapability(1.0, 1.2, 1.0, cap4);
+    ASSERT_FALSE(testNode == NULL);
+
+    tree.setNodeCapability(1.0, 2.0, 1.0, cap4);
+
+    // test if all capabilities are inserted correctly
+    ASSERT_TRUE(cap1 == tree.getNodeCapability(1.0, 1.0, 1.0));
+    ASSERT_TRUE(cap2 == tree.getNodeCapability(1.0, 1.0, 2.0));
+    ASSERT_TRUE(cap3 == tree.getNodeCapability(1.2, 1.0, 1.0));
+    ASSERT_TRUE(cap4 == tree.getNodeCapability(1.0, 1.2, 1.0));
+    ASSERT_TRUE(cap4 == tree.getNodeCapability(1.0, 2.0, 1.0));
+
+    // replace cap3 with cap4
+    tree.setNodeCapability(1.2, 1.0, 1.0, cap4);
+
+    ASSERT_TRUE(cap4 == tree.getNodeCapability(1.2, 1.0, 1.0));
+
+    // test for not inserted nodes
+    ASSERT_TRUE(emptyCap == tree.getNodeCapability(2.0, 2.0, 2.0));
+}
+
+TEST(CapabilityOcTree, isPosePossible)
+{
+    // test if isPosePossible() returns correct value (more accurate tests are in TEST(Capability, isDirectionPossible))
+    CapabilityOcTree tree(0.1);
+    tree.setNodeCapability(1.0, 1.0, 1.0, CONE, 20.0, 20.0, 10.1);
+
+    // testing just two nodes is enough to ensure this function is working
+    ASSERT_TRUE(tree.isPosePossible(1.0, 1.0, 1.0, 20.0, 20.0));
+    ASSERT_TRUE(tree.isPosePossible(1.0, 1.0, 1.0, 20.0, 25.0));
+    ASSERT_FALSE(tree.isPosePossible(1.0, 1.0, 1.0, 50.0, 50.0));
+
+    ASSERT_FALSE(tree.isPosePossible(2.0, 2.0, 2.0, 0.0, 0.0));
 }
 
 

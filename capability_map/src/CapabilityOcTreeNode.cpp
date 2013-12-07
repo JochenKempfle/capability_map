@@ -1,6 +1,55 @@
+#include <cmath>
 #include "./../include/capability_map/CapabilityOcTreeNode.h"
 
 
+bool Capability::isDirectionPossible(double phi, double theta) const
+{
+    assert(theta <= 180.0);
+
+    // convert angles to rad
+    double thetaInRad1 = M_PI * (90.0 - _theta) / 180.0;
+    double thetaInRad2 = M_PI * (90.0 - theta) / 180.0;
+    double phiInRad1 = M_PI * _phi / 180.0;
+    double phiInRad2 = M_PI * phi / 180.0;
+    // calculate the shortest angle (great-circle distance) between both directions
+    double orthodromeAngle = acos(sin(thetaInRad1) * sin(thetaInRad2) + cos(thetaInRad1) *
+                                  cos(thetaInRad2) * cos(phiInRad2 - phiInRad1)) * 180.0 / M_PI;
+
+    bool retValue = false;
+
+    switch (_type)
+    {
+        case EMPTY:
+            // no direction possible
+            retValue = false;
+            break;
+
+        case SPHERE:
+            // every direction possible
+            retValue = true;
+            break;
+
+        case CONE:
+            // only directions are possible that lie inside the cone's opening angle
+            retValue = orthodromeAngle <= _halfOpeningAngle;
+            break;
+
+        case CYLINDER_1:
+            // CYLINDER_1 can be seen as double cone, possible directions must lie inside opening angle of both sides
+            retValue = orthodromeAngle <= _halfOpeningAngle || std::abs(orthodromeAngle - 180.0) <= _halfOpeningAngle;
+            break;
+
+        case CYLINDER_2:
+            // the sensitive area of the cylinder is orthogonal to the up-direction (up-direction +- 90°)
+            retValue = std::abs(90.0 - orthodromeAngle) <= _halfOpeningAngle;
+            break;
+
+        default:
+            retValue = false;
+    }
+
+    return retValue;
+}
 
 CapabilityOcTreeNode::CapabilityOcTreeNode() : OcTreeDataNode<Capability>(Capability(EMPTY, 0.0f, 0.0f, 0.0f))
 {

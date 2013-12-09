@@ -46,8 +46,7 @@ class Capability
     Capability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle)
                : _type(type), _phi(phi), _theta(theta), _halfOpeningAngle(halfOpeningAngle) { assert(theta <= 180.0); }
 
-    // TODO: are setter and getter needed? Uncomment if yes.
-    
+    // setter and getter
     void setType(CAPABILITY_TYPE type) { _type = type; }
     CAPABILITY_TYPE getType() const { return _type; }
 
@@ -55,8 +54,8 @@ class Capability
     double getPhi() const { return _phi; }
     double getTheta() const { return _theta; }
 
-    void setOpeningAngle(double halfOpeningAngle) { _halfOpeningAngle = halfOpeningAngle; }
-    double getOpeningAngle() const { return _halfOpeningAngle; }
+    void setHalfOpeningAngle(double halfOpeningAngle) { _halfOpeningAngle = halfOpeningAngle; }
+    double getHalfOpeningAngle() const { return _halfOpeningAngle; }
     
 
     FRIEND_TEST(Capability, equalityOperators);

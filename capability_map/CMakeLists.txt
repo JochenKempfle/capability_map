@@ -29,7 +29,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-#target_link_libraries(${PROJECT_NAME} octomap)
+#rosbuild_add_library(${PROJECT_NAME} src/CapabilityOcTreeNode.cpp src/CapabilityOcTree.cpp)
 rosbuild_add_gtest(CapabilityTest src/CapabilityOcTreeNode.cpp src/CapabilityOcTree.cpp src/CapabilityTest.cpp)
 #rosbuild_add_gtest_build_flags(CapabilityTest)
 #rosbuild_add_executable(example examples/example.cpp)

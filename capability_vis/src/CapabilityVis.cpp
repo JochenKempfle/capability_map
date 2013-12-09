@@ -2,9 +2,7 @@
 #include <visualization_msgs/Marker.h>
 #include <cmath>
 
-// TODO: set include dirs with CMakeFiles (find out how)
-#include "./../../capability_map/include/capability_map/CapabilityOcTree.h"
-
+#include "capability_map/CapabilityOcTree.h"
 
 bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const CapabilityOcTree::leaf_iterator &it)
 {

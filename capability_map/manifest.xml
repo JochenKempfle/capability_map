@@ -12,6 +12,9 @@
   <depend package="octomap"/>
   <depend package="std_msgs"/>
 
-</package>
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lcapability_map"/>
+  </export>
 
+</package>
 

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <gtest/gtest.h>
-#include "./../include/capability_map/CapabilityOcTreeNode.h"
-#include "./../include/capability_map/CapabilityOcTree.h"
+#include "capability_map/CapabilityOcTreeNode.h"
+#include "capability_map/CapabilityOcTree.h"
 
 
 TEST(Capability, constructor)
@@ -13,13 +13,19 @@ TEST(Capability, constructor)
     ASSERT_TRUE(0.0 == cap1._phi);
     ASSERT_TRUE(0.0 == cap1._theta);
     ASSERT_TRUE(0.0 == cap1._halfOpeningAngle);
+    ASSERT_TRUE(0 == cap1._shapeFitError);
 
-    Capability cap2(SPHERE, 0.1, 0.2, 0.3);
+    Capability cap2(SPHERE, 0.1, 0.2, 0.3, 2.0);
 
     ASSERT_TRUE(SPHERE == cap2._type);
     ASSERT_TRUE(0.1 == cap2._phi);
     ASSERT_TRUE(0.2 == cap2._theta);
     ASSERT_TRUE(0.3 == cap2._halfOpeningAngle);
+    ASSERT_TRUE(2.0 == cap2._shapeFitError);
+
+    // test if shape fit error is correctly initialized to zero
+    Capability cap3(CONE, 10.0, 10.0, 10.0);
+    ASSERT_TRUE(0.0 == cap3._shapeFitError);
 }
 
 TEST(Capability, equalityOperators)
@@ -30,16 +36,20 @@ TEST(Capability, equalityOperators)
     Capability cap3(SPHERE, 0.0, 0.1, 0.2);
     Capability cap4(CONE, 0.1, 0.2, 0.3);
     Capability cap5(CONE, 0.1, 0.2, 0.4);
+    // test for shape fit error
+    Capability cap6(CONE, 0.1, 0.2, 0.4, 2.0);
 
     ASSERT_TRUE(cap1 == cap2);
     ASSERT_FALSE(cap1 == cap3);
     ASSERT_FALSE(cap1 == cap4);
     ASSERT_FALSE(cap4 == cap5);
+    ASSERT_FALSE(cap5 == cap6);
 
     ASSERT_FALSE(cap1 != cap2);
     ASSERT_TRUE(cap1 != cap3);
     ASSERT_TRUE(cap1 != cap4);
     ASSERT_TRUE(cap4 != cap5);
+    ASSERT_TRUE(cap5 != cap6);
 }
 
 TEST(Capability, isDirectionPossible)
@@ -305,6 +315,31 @@ TEST(CapabilityOcTree, isPosePossible)
 
     ASSERT_FALSE(tree.isPosePossible(2.0, 2.0, 2.0, 0.0, 0.0));
 }
+
+TEST(CapabilityOcTree, read_writeBinary)
+{
+    CapabilityOcTree tree(0.1);
+    tree.setNodeCapability(1.0, 1.0, 1.0, EMPTY, 0.0, 0.0, 0.0);
+    tree.setNodeCapability(1.2, 1.0, 1.0, SPHERE, 20.0, 20.0, 10.0);
+    tree.setNodeCapability(1.2, 1.2, 1.0, CONE, 20.0, 20.0, 10.0);
+    tree.setNodeCapability(2.0, 1.0, 1.0, CYLINDER_1, 20.0, 20.0, 10.0);
+    tree.setNodeCapability(2.0, 2.0, 1.0, CYLINDER_2, 20.0, 20.0, 10.0);
+
+    tree.write("./test_tree.cpm");
+
+    CapabilityOcTree* tree2 = dynamic_cast<CapabilityOcTree*>(AbstractOcTree::read("./test_tree.cpm"));
+
+    remove("./test_tree.cpm");
+
+    ASSERT_TRUE(tree.getNodeCapability(1.0, 1.0, 1.0) == tree2->getNodeCapability(1.0, 1.0, 1.0));
+    ASSERT_TRUE(tree.getNodeCapability(1.2, 1.0, 1.0) == tree2->getNodeCapability(1.2, 1.0, 1.0));
+    ASSERT_TRUE(tree.getNodeCapability(1.2, 1.2, 1.0) == tree2->getNodeCapability(1.2, 1.2, 1.0));
+    ASSERT_TRUE(tree.getNodeCapability(2.0, 1.0, 1.0) == tree2->getNodeCapability(2.0, 1.0, 1.0));
+    ASSERT_TRUE(tree.getNodeCapability(2.0, 2.0, 1.0) == tree2->getNodeCapability(2.0, 2.0, 1.0));
+
+    delete tree2;
+}
+
 
 
 int main(int argc, char **argv)

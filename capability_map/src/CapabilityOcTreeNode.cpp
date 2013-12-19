@@ -1,5 +1,5 @@
 #include <cmath>
-#include "./../include/capability_map/CapabilityOcTreeNode.h"
+#include "capability_map/CapabilityOcTreeNode.h"
 
 
 bool Capability::isDirectionPossible(double phi, double theta) const
@@ -51,7 +51,7 @@ bool Capability::isDirectionPossible(double phi, double theta) const
     return retValue;
 }
 
-CapabilityOcTreeNode::CapabilityOcTreeNode() : OcTreeDataNode<Capability>(Capability(EMPTY, 0.0f, 0.0f, 0.0f))
+CapabilityOcTreeNode::CapabilityOcTreeNode() : OcTreeDataNode<Capability>(Capability(EMPTY, 0.0, 0.0, 0.0, 0.0))
 {
 
 }

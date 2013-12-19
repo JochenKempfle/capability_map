@@ -1,5 +1,5 @@
-#include "./../include/capability_map/CapabilityOcTree.h"
-#include "./../include/capability_map/CapabilityOcTreeNode.h"
+#include "capability_map/CapabilityOcTree.h"
+#include "capability_map/CapabilityOcTreeNode.h"
 
 
 CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const OcTreeKey &key, const Capability &capability)
@@ -14,9 +14,9 @@ CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const OcTreeKey &key, 
     return setNodeCapabilityRecurs(this->root, createdRoot, key, 0, capability);
 }
 
-CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const double &x, const double &y,
-                                                          const double &z, CAPABILITY_TYPE type,
-                                                          double phi, double theta, double halfOpeningAngle)
+CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const double &x, const double &y, const double &z,
+                                                          CAPABILITY_TYPE type, double phi, double theta,
+                                                          double halfOpeningAngle, double shapeFitError)
 {
     OcTreeKey key;
     // NOTE: there is a bug in creating a key. Floating point precision seems to cause the error
@@ -26,7 +26,7 @@ CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const double &x, const
     {
         return NULL;
     }
-    return setNodeCapability(key, Capability(type, phi, theta, halfOpeningAngle));
+    return setNodeCapability(key, Capability(type, phi, theta, halfOpeningAngle, shapeFitError));
 }
 
 CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const double &x, const double &y,

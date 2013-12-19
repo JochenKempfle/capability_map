@@ -1,0 +1,17 @@
+<package>
+  <description brief="capability_map_generator">
+
+     capability_map_generator
+
+  </description>
+  <author>Jochen</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/capability_map_generator</url>
+  <depend package="roscpp"/>
+  <depend package="capability_map"/>
+  <rosdep name="eigen" />
+
+</package>
+
+

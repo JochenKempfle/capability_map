@@ -42,9 +42,12 @@ class Capability
 
     FRIEND_TEST(Capability, constructor);
 
-    Capability() : _type(EMPTY), _phi(0.0), _theta(0.0), _halfOpeningAngle(0.0) { }
-    Capability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle)
-               : _type(type), _phi(phi), _theta(theta), _halfOpeningAngle(halfOpeningAngle) { assert(theta <= 180.0); }
+    Capability() : _type(EMPTY), _phi(0.0), _theta(0.0), _halfOpeningAngle(0.0), _shapeFitError(0.0) { }
+    Capability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle, double shapeFitError = 0.0)
+               : _type(type), _phi(phi), _theta(theta), _halfOpeningAngle(halfOpeningAngle), _shapeFitError(shapeFitError)
+    {
+        assert(theta <= 180.0);
+    }
 
     // setter and getter
     void setType(CAPABILITY_TYPE type) { _type = type; }
@@ -56,17 +59,21 @@ class Capability
 
     void setHalfOpeningAngle(double halfOpeningAngle) { _halfOpeningAngle = halfOpeningAngle; }
     double getHalfOpeningAngle() const { return _halfOpeningAngle; }
-    
+
+    void setShapeFitError(char shapeFitError) { _shapeFitError = shapeFitError; }
+    double getShapeFitError() { return _shapeFitError; }
 
     FRIEND_TEST(Capability, equalityOperators);
 
     inline bool operator==(const Capability &other) const
     {
-        return (_type == other._type && _phi == other._phi && _theta == other._theta && _halfOpeningAngle == other._halfOpeningAngle);
+        return (_type == other._type && _phi == other._phi && _theta == other._theta
+                && _halfOpeningAngle == other._halfOpeningAngle && _shapeFitError == other._shapeFitError);
     }
     inline bool operator!=(const Capability &other) const
     {
-        return (_type != other._type || _phi != other._phi || _theta != other._theta || _halfOpeningAngle != other._halfOpeningAngle);
+        return (_type != other._type || _phi != other._phi || _theta != other._theta
+                || _halfOpeningAngle != other._halfOpeningAngle || _shapeFitError != other._shapeFitError);
     }
 
     FRIEND_TEST(Capability, isDirectionPossible);
@@ -76,12 +83,14 @@ class Capability
 
   protected:
 
-    // TODO: add Shape Fit Error
     CAPABILITY_TYPE _type;
+
     // the direction of the capability shape in sphere coordinates
     double _phi, _theta;
     // _halfOpeningAngle is the half opening angle of a cone or the height of a cylinder
     double _halfOpeningAngle;
+    // the shape fit error (how well does the shape fit the data): 0 -> best, 100 -> worst
+    double _shapeFitError;
 };
 
 
@@ -132,9 +141,9 @@ class CapabilityOcTreeNode : public OcTreeDataNode<Capability>
 
     // setter/getter for Capability (value derived from OcTreeDataNode)
     inline void setCapability(Capability capability) { value = capability; }
-    inline void setCapability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle)
+    inline void setCapability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle, double shapeFitError = 0.0)
     {
-        value = Capability(type, phi, theta, halfOpeningAngle);
+        value = Capability(type, phi, theta, halfOpeningAngle, shapeFitError);
     }
 
     inline Capability getCapability() const { return value; }

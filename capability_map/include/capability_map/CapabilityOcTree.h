@@ -31,7 +31,8 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
     CapabilityOcTreeNode* setNodeCapability(const OcTreeKey &key, const Capability &capability);
 
     CapabilityOcTreeNode* setNodeCapability(const double &x, const double &y, const double &z,
-                                            CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle);
+                                            CAPABILITY_TYPE type, double phi, double theta,
+                                            double halfOpeningAngle, double shapeFitError = 0.0);
 
     CapabilityOcTreeNode* setNodeCapability(const double &x, const double &y,
                                             const double &z, const Capability &capability);

@@ -36,3 +36,7 @@ rosbuild_add_library(${PROJECT_NAME} src/ReachabilitySphere.cpp)
 rosbuild_add_gtest(CapabilityMapGeneratorTest src/CapabilityMapGeneratorTest.cpp)
 target_link_libraries(CapabilityMapGeneratorTest ${PROJECT_NAME})
 
+rosbuild_add_executable(capability_map_generator src/main.cpp src/ReachabilityInterface.cpp)
+
+rosbuild_add_library(reachability_dummy_interface src/ReachabilityDummyInterface.cpp)
+

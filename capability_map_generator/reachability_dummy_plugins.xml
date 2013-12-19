@@ -1,0 +1,7 @@
+<library path="lib/libreachability_dummy_interface">
+    <class type="capability_map_generator::ReachabilityDummyInterface" base_class_type="capability_map_generator::ReachabilityInterface">
+        <description>
+            A description of MyPlugin
+        </description>
+    </class>
+</library>

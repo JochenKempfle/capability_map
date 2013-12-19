@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="capability_map_generator" type="capability_map_generator" name="capability_map_generator">
+        <param name="reachability_interface" value="capability_map_generator::ReachabilityDummyInterface"/>
+    </node>
+</launch>
+

@@ -32,9 +32,9 @@ include_directories(${EIGEN_INCLUDE_DIRS})
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_library(${PROJECT_NAME} src/ReachabilitySphere.cpp)
+rosbuild_add_library(reachability_sphere src/ReachabilitySphere.cpp)
 rosbuild_add_gtest(CapabilityMapGeneratorTest src/CapabilityMapGeneratorTest.cpp)
-target_link_libraries(CapabilityMapGeneratorTest ${PROJECT_NAME})
+target_link_libraries(CapabilityMapGeneratorTest reachability_sphere)
 
 rosbuild_add_executable(capability_map_generator src/main.cpp src/ReachabilityInterface.cpp)
 

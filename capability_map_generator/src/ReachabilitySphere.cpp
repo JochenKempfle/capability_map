@@ -69,7 +69,7 @@ Capability ReachabilitySphere::convertToCapability()
     // having just one reachable direction causes the PCA to fail (division through zero), so catch this case
     if (_reachableDirections.size() == 1)
     {
-        double phi = atan2(_reachableDirections[0].x, _reachableDirections[0].y) * 180.0 / M_PI;
+        double phi = atan2(_reachableDirections[0].y, _reachableDirections[0].x) * 180.0 / M_PI;
         double theta = acos(_reachableDirections[0].z) * 180.0 / M_PI;
         // TODO: choose a good half opening angle in case there is just one direction reachable
         return Capability(CONE, phi, theta, 0.5);
@@ -80,12 +80,18 @@ Capability ReachabilitySphere::convertToCapability()
     // get principal components
     std::vector<Vector> eigenVectors = getPrincipalComponents(currentDirections);
 
-    // TODO: it is possible that the principal component points to the opposite direction (important for cone)
-
     // try to fit different shapes to current directions (eigen sorts eigenvectors by increasing eigenvalues)
 
     // the eigenvector with the smallest eigenvalue is chosen to be the cone's axis
     std::pair<double, double> conePair = fitCone(eigenVectors[0]);
+
+    // it is possible that the principal component points to the opposite direction, so try opposite direction too
+    std::pair<double, double> conePair2 = fitCone(eigenVectors[0] * (-1.0));
+    if (conePair2.second < conePair.second)
+    {
+        conePair = conePair2;
+        eigenVectors[0] = eigenVectors[0] * (-1.0);
+    }
 
     // the eigenvector with the greatest eigenvalue is chosen to be the cylinder_1's axis
     std::pair<double, double> cylinder_1Pair = fitCylinder_1(eigenVectors[2]);
@@ -99,7 +105,7 @@ Capability ReachabilitySphere::convertToCapability()
     if (conePair.second < cylinder_1Pair.second && conePair.second < cylinder_2Pair.second)
     {
         // cone gets chosen
-        double phi = atan2(eigenVectors[0].x, eigenVectors[0].y) * 180.0 / M_PI;
+        double phi = atan2(eigenVectors[0].y, eigenVectors[0].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[0].z) * 180.0 / M_PI;
 
         retCapability = Capability(CONE, phi, theta, conePair.first, conePair.second);
@@ -107,7 +113,7 @@ Capability ReachabilitySphere::convertToCapability()
     else if (cylinder_1Pair.second < cylinder_2Pair.second)
     {
         // cylinder_1 gets chosen
-        double phi = atan2(eigenVectors[2].x, eigenVectors[2].y) * 180.0 / M_PI;
+        double phi = atan2(eigenVectors[2].y, eigenVectors[2].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[2].z) * 180.0 / M_PI;
 
         retCapability = Capability(CYLINDER_1, phi, theta, cylinder_1Pair.first, cylinder_1Pair.second);
@@ -115,7 +121,7 @@ Capability ReachabilitySphere::convertToCapability()
     else
     {
         // cylinder_2 gets chosen
-        double phi = atan2(eigenVectors[0].x, eigenVectors[0].y) * 180.0 / M_PI;
+        double phi = atan2(eigenVectors[0].y, eigenVectors[0].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[0].z) * 180.0 / M_PI;
 
         retCapability = Capability(CYLINDER_2, phi, theta, cylinder_2Pair.first, cylinder_2Pair.second);
@@ -198,7 +204,7 @@ std::pair<double, double> ReachabilitySphere::fitCone(const Vector &axis) const
     size_t numReachableDirections = _reachableDirections.size();
     size_t numUnreachableDirections = _unreachableDirections.size();
 
-    double phiInRadAxis = atan2(axis.x, axis.y);
+    double phiInRadAxis = atan2(axis.y, axis.x);
     double thetaInRadAxis = M_PI / 2.0 - acos(axis.z);
 
     // compute all possible orthodromeAngles and store them in a std::vector
@@ -207,7 +213,7 @@ std::pair<double, double> ReachabilitySphere::fitCone(const Vector &axis) const
     for (size_t i = 0; i < numReachableDirections; ++i)
     {
         // convert angles to rad
-        double phiInRad = atan2(_reachableDirections[i].x, _reachableDirections[i].y);
+        double phiInRad = atan2(_reachableDirections[i].y, _reachableDirections[i].x);
         double thetaInRad = M_PI / 2.0 - acos(_reachableDirections[i].z);
         // calculate the shortest angle in rad (great-circle distance) between axis and current direction
         reachableOrthodromeAngles[i] = acos(sin(thetaInRadAxis) * sin(thetaInRad) + cos(thetaInRadAxis) *
@@ -220,7 +226,7 @@ std::pair<double, double> ReachabilitySphere::fitCone(const Vector &axis) const
     for (size_t i = 0; i < numUnreachableDirections; ++i)
     {
         // convert angles to rad
-        double phiInRad = atan2(_unreachableDirections[i].x, _unreachableDirections[i].y);
+        double phiInRad = atan2(_unreachableDirections[i].y, _unreachableDirections[i].x);
         double thetaInRad = M_PI / 2.0 - acos(_unreachableDirections[i].z);
         // calculate the shortest angle in rad (great-circle distance) between axis and current direction
         unreachableOrthodromeAngles[i] = acos(sin(thetaInRadAxis) * sin(thetaInRad) + cos(thetaInRadAxis) *
@@ -260,7 +266,7 @@ std::pair<double, double> ReachabilitySphere::fitCone(const Vector &axis) const
         if (shapeFitError <= bestShapeFitError)
         {
             bestShapeFitError = shapeFitError;
-            bestAngle = reachableOrthodromeAngles[i];
+            bestAngle = reachableOrthodromeAngles[i - 1];
         }
     }
 
@@ -270,16 +276,16 @@ std::pair<double, double> ReachabilitySphere::fitCone(const Vector &axis) const
         bestShapeFitError = 100.0;
     }
 
-    return std::make_pair(bestAngle, bestShapeFitError);
+    return std::make_pair(bestAngle * 180.0 / M_PI, bestShapeFitError);
 }
 
 
 std::pair<double, double> ReachabilitySphere::fitCylinder_1(const Vector &axis) const
 {
-    int numReachableDirections = _reachableDirections.size();
-    int numUnreachableDirections = _unreachableDirections.size();
+    size_t numReachableDirections = _reachableDirections.size();
+    size_t numUnreachableDirections = _unreachableDirections.size();
 
-    double phiInRadAxis = atan2(axis.x, axis.y);
+    double phiInRadAxis = atan2(axis.y, axis.x);
     double thetaInRadAxis = M_PI / 2.0 - acos(axis.z);
 
     // compute all possible orthodromeAngles and store them in a std::vector
@@ -288,7 +294,7 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_1(const Vector &axis) 
     for (size_t i = 0; i < numReachableDirections; ++i)
     {
         // convert angles to rad
-        double phiInRad = atan2(_reachableDirections[i].x, _reachableDirections[i].y);
+        double phiInRad = atan2(_reachableDirections[i].y, _reachableDirections[i].x);
         double thetaInRad = M_PI / 2.0 - acos(_reachableDirections[i].z);
         // calculate the shortest angle in rad (great-circle distance) between axis and current direction
         double tempAngle = acos(sin(thetaInRadAxis) * sin(thetaInRad) + cos(thetaInRadAxis) *
@@ -304,7 +310,7 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_1(const Vector &axis) 
     for (size_t i = 0; i < numUnreachableDirections; ++i)
     {
         // convert angles to rad
-        double phiInRad = atan2(_unreachableDirections[i].x, _unreachableDirections[i].y);
+        double phiInRad = atan2(_unreachableDirections[i].y, _unreachableDirections[i].x);
         double thetaInRad = M_PI / 2.0 - acos(_unreachableDirections[i].z);
         // calculate the shortest angle in rad (great-circle distance) between axis and current direction
         double tempAngle = acos(sin(thetaInRadAxis) * sin(thetaInRad) + cos(thetaInRadAxis) *
@@ -347,7 +353,7 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_1(const Vector &axis) 
         if (shapeFitError <= bestShapeFitError)
         {
             bestShapeFitError = shapeFitError;
-            bestAngle = reachableOrthodromeAngles[i];
+            bestAngle = reachableOrthodromeAngles[i - 1];
         }
     }
 
@@ -357,16 +363,16 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_1(const Vector &axis) 
         bestShapeFitError = 100.0;
     }
 
-    return std::make_pair(bestAngle, bestShapeFitError);
+    return std::make_pair(bestAngle * 180.0 / M_PI, bestShapeFitError);
 }
 
 
 std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) const
 {
-    int numReachableDirections = _reachableDirections.size();
-    int numUnreachableDirections = _unreachableDirections.size();
+    size_t numReachableDirections = _reachableDirections.size();
+    size_t numUnreachableDirections = _unreachableDirections.size();
 
-    double phiInRadAxis = atan2(axis.x, axis.y);
+    double phiInRadAxis = atan2(axis.y, axis.x);
     double thetaInRadAxis = M_PI / 2.0 - acos(axis.z);
 
     // compute all possible orthodromeAngles and store them in a std::vector
@@ -375,7 +381,7 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) 
     for (size_t i = 0; i < numReachableDirections; ++i)
     {
         // convert angles to rad
-        double phiInRad = atan2(_reachableDirections[i].x, _reachableDirections[i].y);
+        double phiInRad = atan2(_reachableDirections[i].y, _reachableDirections[i].x);
         double thetaInRad = M_PI / 2.0 - acos(_reachableDirections[i].z);
         // calculate the shortest angle in rad (great-circle distance) between axis and current direction
         // since the sensitive part of cylinder_2 is at 90° around the axis subtract the orthodrome from PI/2
@@ -389,7 +395,7 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) 
     for (size_t i = 0; i < numUnreachableDirections; ++i)
     {
         // convert angles to rad
-        double phiInRad = atan2(_unreachableDirections[i].x, _unreachableDirections[i].y);
+        double phiInRad = atan2(_unreachableDirections[i].y, _unreachableDirections[i].x);
         double thetaInRad = M_PI / 2.0 - acos(_unreachableDirections[i].z);
         // calculate the shortest angle in rad (great-circle distance) between axis and current direction
         // since the sensitive part of cylinder_2 is at 90° around the axis subtract the orthodrome from PI/2
@@ -430,7 +436,7 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) 
         if (shapeFitError <= bestShapeFitError)
         {
             bestShapeFitError = shapeFitError;
-            bestAngle = reachableOrthodromeAngles[i];
+            bestAngle = reachableOrthodromeAngles[i - 1];
         }
     }
 
@@ -440,6 +446,6 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) 
         bestShapeFitError = 100.0;
     }
 
-    return std::make_pair(bestAngle, bestShapeFitError);
+    return std::make_pair(bestAngle * 180.0 / M_PI, bestShapeFitError);
 }
 

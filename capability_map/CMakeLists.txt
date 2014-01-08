@@ -19,7 +19,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 #rosbuild_genmsg()
 #uncomment if you have defined services
-#rosbuild_gensrv()
+rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
@@ -33,4 +33,4 @@ rosbuild_add_library(${PROJECT_NAME} src/CapabilityOcTreeNode.cpp src/Capability
 rosbuild_add_gtest(CapabilityTest src/CapabilityTest.cpp)
 target_link_libraries(CapabilityTest ${PROJECT_NAME})
 #rosbuild_add_gtest_build_flags(CapabilityTest)
-#rosbuild_add_executable(example examples/example.cpp)
+rosbuild_add_executable(capability_map src/main.cpp)

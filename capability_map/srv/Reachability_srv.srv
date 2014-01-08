@@ -1,0 +1,4 @@
+geometry_msgs/Pose pose
+---
+uint8 reachable
+float64 SFE

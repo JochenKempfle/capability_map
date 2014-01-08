@@ -1,9 +1,13 @@
 #include "capability_map_generator/ReachabilitySphere.h"
+#include "capability_map_generator/Vector.h"
 
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 #include <cmath>
 #include <algorithm>
+
+namespace capability_map_generator
+{
 
 ReachabilitySphere::ReachabilitySphere()
 {
@@ -52,6 +56,12 @@ void ReachabilitySphere::appendDirection(double x, double y, double z, bool reac
     {
         _unreachableDirections.push_back(Vector(x, y, z));
     }
+}
+
+void ReachabilitySphere::clear()
+{
+    _reachableDirections.clear();
+    _unreachableDirections.clear();
 }
 
 Capability ReachabilitySphere::convertToCapability()
@@ -131,7 +141,7 @@ Capability ReachabilitySphere::convertToCapability()
 }
 
 
-std::vector<ReachabilitySphere::Vector> ReachabilitySphere::getPrincipalComponents(const std::vector<Vector> &coords) const
+std::vector<Vector> ReachabilitySphere::getPrincipalComponents(const std::vector<Vector> &coords) const
 {
     size_t size = coords.size();
 
@@ -448,4 +458,6 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) 
 
     return std::make_pair(bestAngle * 180.0 / M_PI, bestShapeFitError);
 }
+
+} // namespace
 

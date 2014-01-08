@@ -3,11 +3,14 @@
 #include <gtest/gtest.h>
 
 #include "capability_map/CapabilityOcTreeNode.h"
+#include "capability_map_generator/Vector.h"
 
 
 #ifndef REACHABILITYSPHERE_H
 #define REACHABILITYSPHERE_H
 
+namespace capability_map_generator
+{
 
 class ReachabilitySphere
 {
@@ -23,18 +26,11 @@ class ReachabilitySphere
     // and determines if this direction is reachable or not
     void appendDirection(double x, double y, double z, bool reachable);
 
+    // removes all appended directions
+    void clear();
+
     Capability convertToCapability();
 
-    // helper class used for coordinates and vectors
-    class Vector
-    {
-      public:
-	Vector() { }
-	~Vector() { }
-        Vector(double xVal, double yVal, double zVal) : x(xVal), y(yVal), z(zVal) { }
-        Vector operator*(double rhs) const { return Vector(x * rhs, y * rhs, z * rhs); }
-        double x, y, z;
-    };
 
   protected:
 
@@ -58,6 +54,8 @@ class ReachabilitySphere
     std::vector<Vector> _reachableDirections;
     std::vector<Vector> _unreachableDirections;
 };
+
+}
 
 #endif // REACHABILITYSPHERE_H
 

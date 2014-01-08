@@ -4,7 +4,11 @@
 #include <vector>
 #include <utility>
 #include "capability_map_generator/ReachabilitySphere.h"
+#include "capability_map_generator/Vector.h"
 #include "capability_map/CapabilityOcTreeNode.h"
+
+namespace capability_map_generator
+{
 
 // helper function for floating point comparison
 bool fuzzyEquals(double i, double j)
@@ -13,7 +17,7 @@ bool fuzzyEquals(double i, double j)
 }
 
 // function which equally distibutes points on a sphere
-std::vector<ReachabilitySphere::Vector> distributePointsOnSphere(unsigned int n)
+std::vector<Vector> distributePointsOnSphere(unsigned int n)
 {
     // variant of spiral point algorithm (Saff et al.) which uses golden angle to spread points
     double goldenAngle = M_PI * (3.0 - sqrt(5.0));
@@ -21,12 +25,12 @@ std::vector<ReachabilitySphere::Vector> distributePointsOnSphere(unsigned int n)
     double angle = 0.0;
     double z = 1.0 - dz / 2.0;
     
-    std::vector<ReachabilitySphere::Vector> points(n);
+    std::vector<Vector> points(n);
     
     for (unsigned int i = 0; i < n; ++i)
     {
         double r = sqrt(1.0 - z*z);
-        points[i] = ReachabilitySphere::Vector(cos(angle) * r, sin(angle) * r, z);
+        points[i] = Vector(cos(angle) * r, sin(angle) * r, z);
         z = z - dz;
         angle = angle + goldenAngle;
     }
@@ -37,7 +41,7 @@ std::vector<ReachabilitySphere::Vector> distributePointsOnSphere(unsigned int n)
 ReachabilitySphere createReachabilitySphereFromCapability(Capability cap, unsigned int numPoints)
 {
     // spread points over a sphere
-    std::vector<ReachabilitySphere::Vector> points = distributePointsOnSphere(numPoints);
+    std::vector<Vector> points = distributePointsOnSphere(numPoints);
     
 //    Capability cap(type, phi, theta, halfOpeningAngle);
     ReachabilitySphere sphere;
@@ -90,14 +94,14 @@ TEST(ReachabilitySphere, appendDirection)
 TEST(ReachabilitySphere, getPrincipalComponents)
 {
     ReachabilitySphere sphere;
-    std::vector<ReachabilitySphere::Vector> vectors;
-    std::vector<ReachabilitySphere::Vector> components;
+    std::vector<Vector> vectors;
+    std::vector<Vector> components;
 
     // a line in x direction should give the main principal component lying in x direction
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(1.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(2.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(3.0, 0.0, 0.0));
+    vectors.push_back(Vector(0.0, 0.0, 0.0));
+    vectors.push_back(Vector(1.0, 0.0, 0.0));
+    vectors.push_back(Vector(2.0, 0.0, 0.0));
+    vectors.push_back(Vector(3.0, 0.0, 0.0));
     
     components = sphere.getPrincipalComponents(vectors);
 
@@ -108,10 +112,10 @@ TEST(ReachabilitySphere, getPrincipalComponents)
     vectors.clear();
 
     // a line in y direction should give the main principal component lying in y direction
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 1.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 2.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 3.0, 0.0));
+    vectors.push_back(Vector(0.0, 0.0, 0.0));
+    vectors.push_back(Vector(0.0, 1.0, 0.0));
+    vectors.push_back(Vector(0.0, 2.0, 0.0));
+    vectors.push_back(Vector(0.0, 3.0, 0.0));
     
     components = sphere.getPrincipalComponents(vectors);
 
@@ -122,10 +126,10 @@ TEST(ReachabilitySphere, getPrincipalComponents)
     vectors.clear();
 
     // a line in z direction should give the main principal component lying in z direction
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 1.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 2.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 3.0));
+    vectors.push_back(Vector(0.0, 0.0, 0.0));
+    vectors.push_back(Vector(0.0, 0.0, 1.0));
+    vectors.push_back(Vector(0.0, 0.0, 2.0));
+    vectors.push_back(Vector(0.0, 0.0, 3.0));
     
     components = sphere.getPrincipalComponents(vectors);
 
@@ -136,10 +140,10 @@ TEST(ReachabilitySphere, getPrincipalComponents)
     vectors.clear();
 
     // filling just x and y directions should give the least principal component in z direction
-    vectors.push_back(ReachabilitySphere::Vector(1.0, 2.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(2.0, 1.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(1.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 1.0, 0.0));
+    vectors.push_back(Vector(1.0, 2.0, 0.0));
+    vectors.push_back(Vector(2.0, 1.0, 0.0));
+    vectors.push_back(Vector(1.0, 0.0, 0.0));
+    vectors.push_back(Vector(0.0, 1.0, 0.0));
     
     components = sphere.getPrincipalComponents(vectors);
 
@@ -150,10 +154,10 @@ TEST(ReachabilitySphere, getPrincipalComponents)
     vectors.clear();
 
     // filling just y and z directions should give the least principal component in x direction
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 2.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 1.0, 2.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 1.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 1.0, 1.0));
+    vectors.push_back(Vector(0.0, 2.0, 0.0));
+    vectors.push_back(Vector(0.0, 1.0, 2.0));
+    vectors.push_back(Vector(0.0, 0.0, 1.0));
+    vectors.push_back(Vector(0.0, 1.0, 1.0));
     
     components = sphere.getPrincipalComponents(vectors);
 
@@ -164,10 +168,10 @@ TEST(ReachabilitySphere, getPrincipalComponents)
     vectors.clear();
 
     // filling just x and z directions should give the least principal component in y direction
-    vectors.push_back(ReachabilitySphere::Vector(1.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(2.0, 0.0, 2.0));
-    vectors.push_back(ReachabilitySphere::Vector(2.0, 0.0, 1.0));
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 1.0));
+    vectors.push_back(Vector(1.0, 0.0, 0.0));
+    vectors.push_back(Vector(2.0, 0.0, 2.0));
+    vectors.push_back(Vector(2.0, 0.0, 1.0));
+    vectors.push_back(Vector(0.0, 0.0, 1.0));
     
     components = sphere.getPrincipalComponents(vectors);
 
@@ -178,10 +182,10 @@ TEST(ReachabilitySphere, getPrincipalComponents)
     vectors.clear();
 
     // a line in x-y direction should give the main principal component lying in x-y direction
-    vectors.push_back(ReachabilitySphere::Vector(0.0, 0.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(1.0, 1.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(2.0, 2.0, 0.0));
-    vectors.push_back(ReachabilitySphere::Vector(3.0, 3.0, 0.0));
+    vectors.push_back(Vector(0.0, 0.0, 0.0));
+    vectors.push_back(Vector(1.0, 1.0, 0.0));
+    vectors.push_back(Vector(2.0, 2.0, 0.0));
+    vectors.push_back(Vector(3.0, 3.0, 0.0));
     
     components = sphere.getPrincipalComponents(vectors);
 
@@ -248,7 +252,7 @@ TEST(ReachabilitySphere, fitCone)
     double phiInRad = 90.0 * M_PI / 180.0;
     double thetaInRad = 90.0 * M_PI / 180.0;
 
-    ReachabilitySphere::Vector axis;
+    Vector axis;
     axis.x = sin(thetaInRad) * cos(phiInRad);
     axis.y = sin(thetaInRad) * sin(phiInRad);
     axis.z = cos(thetaInRad);
@@ -320,7 +324,7 @@ TEST(ReachabilitySphere, fitCylinder_1)
     double phiInRad = 90.0 * M_PI / 180.0;
     double thetaInRad = 90.0 * M_PI / 180.0;
 
-    ReachabilitySphere::Vector axis;
+    Vector axis;
     axis.x = sin(thetaInRad) * cos(phiInRad);
     axis.y = sin(thetaInRad) * sin(phiInRad);
     axis.z = cos(thetaInRad);
@@ -392,7 +396,7 @@ TEST(ReachabilitySphere, fitCylinder_2)
     double phiInRad = 90.0 * M_PI / 180.0;
     double thetaInRad = 90.0 * M_PI / 180.0;
 
-    ReachabilitySphere::Vector axis;
+    Vector axis;
     axis.x = sin(thetaInRad) * cos(phiInRad);
     axis.y = sin(thetaInRad) * sin(phiInRad);
     axis.z = cos(thetaInRad);
@@ -497,10 +501,12 @@ TEST(ReachabilitySphere, convertToCapability)
     // ASSERT_EQ(0.0, testCapability.getShapeFitError());
 }
 
+} // namespace
 
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
 

@@ -2,10 +2,11 @@
 
 namespace capability_map_generator
 {
+
 ReachabilityInterface::ReachabilityInterface()
 {
 }
 
-};
+}
 
 

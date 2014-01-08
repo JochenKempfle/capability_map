@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="capability_map_generator" type="capability_map_generator" name="capability_map_generator">
+    <node pkg="capability_map_generator" type="capability_map_generator" name="capability_map_generator" args="-p $(find capability_map_generator)/maps/dummy_map.cpm -n 200 -r 0.1">
         <param name="reachability_interface" value="capability_map_generator::ReachabilityDummyInterface"/>
     </node>
 </launch>

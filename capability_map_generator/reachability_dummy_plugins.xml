@@ -5,3 +5,11 @@
         </description>
     </class>
 </library>
+<library path="lib/libreachability_ros_kinematics_interface">
+    <class type="capability_map_generator::ReachabilityROSKinematicsInterface" base_class_type="capability_map_generator::ReachabilityInterface">
+        <description>
+            A description of MyPlugin
+        </description>
+    </class>
+
+</library>

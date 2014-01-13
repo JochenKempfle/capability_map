@@ -232,7 +232,7 @@ int main(int argc, char** argv )
         {
             visualization_msgs::Marker marker;
 
-            marker.header.frame_id = "/map";
+            marker.header.frame_id = "/base_link";
             marker.header.stamp = ros::Time::now();
 
             marker.ns = "capability_shapes";
@@ -251,7 +251,7 @@ int main(int argc, char** argv )
             // draw a cube around the capability marker to see the volume
             visualization_msgs::Marker cubeMarker;
 
-            cubeMarker.header.frame_id = "/map";
+            cubeMarker.header.frame_id = "/base_link";
             cubeMarker.header.stamp = ros::Time::now();
 
             cubeMarker.ns = "capability_shapes";
@@ -282,7 +282,7 @@ int main(int argc, char** argv )
         {
             visualization_msgs::Marker marker;
 
-            marker.header.frame_id = "/map";
+            marker.header.frame_id = "/base_link";
             marker.header.stamp = ros::Time::now();
 
             marker.ns = "capability_shapes";

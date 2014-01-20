@@ -47,8 +47,8 @@ ReachabilityROSKinematicsInterface::ReachabilityROSKinematicsInterface()
 {
     ros::NodeHandle nhP("~");
     kinematics = loadKinematics(nhP);
-    kinematics->initialize("left_arm",
-            "base_link", "l_gripper_tool_frame", 0.01);
+    kinematics->initialize("right_arm",
+            "torso_lift_link", "r_wrist_roll_link", 0.01);
     ROS_ASSERT(kinematics.get() != NULL);
 
     for(int i = 0; i < 7; i++)
@@ -74,7 +74,7 @@ bool ReachabilityROSKinematicsInterface::isReachable(const octomath::Pose6D &pos
 
 ReachabilityInterface::BoundingBox ReachabilityROSKinematicsInterface::getBoundingBox() const
 {
-    return ReachabilityInterface::BoundingBox(Vector(2.3, 0.1, 0.7), Vector(-0.1, -0.1, 0.3));
+    return ReachabilityInterface::BoundingBox(Vector(-1.0, -1.0, 0.0), Vector(1.0, 1.0, 0.0));
 }
 
 }

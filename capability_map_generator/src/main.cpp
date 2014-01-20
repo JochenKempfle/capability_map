@@ -10,7 +10,7 @@
 
 static pluginlib::ClassLoader<capability_map_generator::ReachabilityInterface>* s_ReachbilityInterface = NULL;
 
-boost::shared_ptr<capability_map_generator::ReachabilityInterface> loadReachabilityInterface(ros::NodeHandle & nh)
+boost::shared_ptr<capability_map_generator::ReachabilityInterface> loadReachabilityInterface(ros::NodeHandle &nh)
 {
     try {
         // create here with new as it can't go out of scope
@@ -145,16 +145,27 @@ int main(int argc, char** argv)
 
     // the reachability sphere which finally creates a capability
     capability_map_generator::ReachabilitySphere sphere;
-
+    
     // get and adjust the boundaries for iteration
     capability_map_generator::ReachabilityInterface::BoundingBox bbx = ri->getBoundingBox();
     bbx.getStartPoint();
 
-    for(double x = bbx.getStartPoint().x; x > bbx.getEndPoint().x; x -= resolution)
+    double startX = bbx.getStartPoint().x < bbx.getEndPoint().x ? bbx.getStartPoint().x : bbx.getEndPoint().x;
+    double endX = bbx.getStartPoint().x < bbx.getEndPoint().x ? bbx.getEndPoint().x : bbx.getStartPoint().x;
+    double startY = bbx.getStartPoint().y < bbx.getEndPoint().y ? bbx.getStartPoint().y : bbx.getEndPoint().y;
+    double endY = bbx.getStartPoint().y < bbx.getEndPoint().y ? bbx.getEndPoint().y : bbx.getStartPoint().y;
+    double startZ = bbx.getStartPoint().z < bbx.getEndPoint().z ? bbx.getStartPoint().z : bbx.getEndPoint().z;
+    double endZ = bbx.getStartPoint().z < bbx.getEndPoint().z ? bbx.getEndPoint().z : bbx.getStartPoint().z;
+
+    // progress in percent
+    double progress = 0.0;
+    double updateProgress = 100.0 / (((endX - startX) / resolution) * ((endY - startY) / resolution));
+
+    for(double x = startX; x <= endX; x += resolution)
     {
-        for(double y = bbx.getStartPoint().y; y > bbx.getEndPoint().y; y -= resolution)
+        for(double y = startY; y <= endY; y += resolution)
         {
-            for(double z = bbx.getStartPoint().z; z > bbx.getEndPoint().z; z -= resolution)
+            for(double z = startZ; z <= endZ; z += resolution)
             {
                 for (int i = 0; i < numSamples; ++i)
                 {
@@ -171,6 +182,9 @@ int main(int argc, char** argv)
                 tree.setNodeCapability(x, y, z, sphere.convertToCapability());
                 sphere.clear();
             }
+            progress += updateProgress;
+            printf("progress: %3.1f%%\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", progress);
+            fflush(stdout);
         }
     }
     if (!tree.write(pathName))

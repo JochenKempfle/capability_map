@@ -22,10 +22,25 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
     double phiInRad = it->getCapability().getPhi() * M_PI / 180.0;
     double thetaInRad = it->getCapability().getTheta() * M_PI / 180.0;
 
+    double halfOpeningAngle = it->getCapability().getHalfOpeningAngle();
+    
+    // cone needs special treatment if halfOpeningAngle is greater than 90.0°
+    if (it->getCapability().getType() == CONE && it->getCapability().getHalfOpeningAngle() > 90.0)
+    {
+        phiInRad = M_PI + phiInRad;
+        if (phiInRad > 2.0 * M_PI)
+        {
+            phiInRad -= 2.0 * M_PI;
+        }
+        thetaInRad = M_PI - thetaInRad;
+        halfOpeningAngle = 180.0 - halfOpeningAngle;
+    }
+    
     // for setting correct scale of capability shapes
     double tanHalfOpeningAngle;
+    
     // be sure tan(halfOpeningAngle) doesn't get too high and does not reach infinity
-    if (it->getCapability().getHalfOpeningAngle() > 89.5)
+    if (halfOpeningAngle > 89.5)
     {
         // cylinders can't have a halfOpeningAngle >= 90° (90° means it is a sphere). Cones can't be displayed with >= 90°.
         // setting halfOpeningAngle to 89.5° is accurate enough without getting too large marker shapes.
@@ -33,15 +48,9 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
     }
     else
     {
-        tanHalfOpeningAngle = tan(it->getCapability().getHalfOpeningAngle() * M_PI / 180.0);
+        tanHalfOpeningAngle = tan(halfOpeningAngle * M_PI / 180.0);
     }
     double scalingFactor = tanHalfOpeningAngle > 1.0 ? 1.0 / tanHalfOpeningAngle : 1.0;
-
-    // init color to base color black
-    marker->color.r = 0.0;
-    marker->color.g = 0.0;
-    marker->color.b = 0.0;
-    marker->color.a = 1.0;
 
     // start and end points of arrow (used by cone)
     geometry_msgs::Point start, end;
@@ -58,10 +67,6 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
             marker->scale.x = size;
             marker->scale.y = size;
             marker->scale.z = size;
-
-            // sphere color is magenta
-            marker->color.r = 1.0;
-            marker->color.b = 1.0;
 
             retVal = true;
             break;
@@ -85,9 +90,6 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
             marker->scale.y = tanHalfOpeningAngle * size * scalingFactor;
             marker->scale.z = size * scalingFactor / 2.0;
 
-            // cone color is blue
-            marker->color.b = 1.0;
-
             retVal = true;
             break;
 
@@ -109,9 +111,6 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
             marker->scale.x = tanHalfOpeningAngle * size * scalingFactor;
             marker->scale.y = 0.0;
             marker->scale.z = 0.001;
-
-            // cylinder_1 color is red
-            marker->color.r = 1.0;
 
             retVal = true;
             break;
@@ -135,9 +134,6 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
             marker->scale.y = 0.0;
             marker->scale.z = 0.001;
 
-            // cylinder_2 color is green
-            marker->color.g = 1.0;
-
             retVal = true;
             break;
 
@@ -145,10 +141,11 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
             retVal = false;
     }
 
-    // TODO: set color according to shape fit error (later)
+    // set color according to shape fit error
     marker->color.r = it->getCapability().getShapeFitError() / 100.0;
-    marker->color.g = 0.0;
+    marker->color.g = 0.5 - it->getCapability().getShapeFitError() / 200.0;
     marker->color.b = 1.0 - it->getCapability().getShapeFitError() / 100.0;
+    marker->color.a = 1.0;
 
     return retVal;
 }
@@ -158,17 +155,18 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
 
 int main(int argc, char** argv )
 {
-    // TODO: get capability map file from arg
-
     ros::init(argc, argv, "capability_shapes");
 
     // arguments
     TCLAP::CmdLine cmd("Visualizes the capability map given by argument", ' ', "1.0");
 
-    TCLAP::ValueArg<std::string> pathNameArg("p", "path", "path and filename of the capability map to be visualized.\n\
+    TCLAP::ValueArg<std::string> pathNameArg("p", "path", "Path and filename of the capability map to be visualized.\n\
                                              Example: -p mydir/mysubdir/filename.cpm", true, "./capability_map.cpm", "string");
+    TCLAP::ValueArg<std::string> frameArg("f", "frame", "Frame to which the capability map belongs.\n\
+                                             Example for the PR2: -f /torso_lift_link", true, "/torso_lift_link", "string");
 
     cmd.add(pathNameArg);
+    cmd.add(frameArg);
 
     // parse arguments with TCLAP
     try
@@ -178,17 +176,16 @@ int main(int argc, char** argv )
     catch (TCLAP::ArgException &e)  // catch any exceptions
     {
         ROS_ERROR("Error: %s for argument %s", e.error().c_str(), e.argId().c_str());
+        ros::shutdown();
         exit(1);
     }
 
     std::string pathName = pathNameArg.getValue();
+    std::string frame = frameArg.getValue();
 
+    // create a dummy CapabilityOcTree to ensure CapabilityOcTree is in classIDMappping
+    CapabilityOcTree dummy(0.1);
     CapabilityOcTree* visTree = dynamic_cast<CapabilityOcTree*>(AbstractOcTree::read(pathName));
-
-    /*if (!visTree.read(pathName))
-    {
-        ROS_ERROR("Error: Couldn't load file %s", pathName.c_str());
-    }*/
 
     ros::NodeHandle n;
     ros::Rate r(1);
@@ -196,7 +193,7 @@ int main(int argc, char** argv )
     ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("capability_marker", 1);
 
     // TODO: remove tree when done debugging
-    CapabilityOcTree tree(0.1);
+    /*CapabilityOcTree tree(0.1);
 
     Capability emptyCap;
     Capability cap1(SPHERE, 0.0, 0.0, 0.0);
@@ -222,17 +219,17 @@ int main(int argc, char** argv )
     tree.setNodeCapability(1.6, 0.0, 1.0, cap8);
     tree.setNodeCapability(1.8, 0.0, 1.0, cap9);
     tree.setNodeCapability(2.0, 0.0, 1.0, cap10);
-    tree.setNodeCapability(2.2, 0.0, 1.0, cap11);
+    tree.setNodeCapability(2.2, 0.0, 1.0, cap11);*/
 
 
     while (ros::ok())
     {
         unsigned int count = 0;
-        for(CapabilityOcTree::leaf_iterator it = tree.begin_leafs(), end = tree.end_leafs(); it != end; ++it)
+        /*for(CapabilityOcTree::leaf_iterator it = tree.begin_leafs(), end = tree.end_leafs(); it != end; ++it)
         {
             visualization_msgs::Marker marker;
 
-            marker.header.frame_id = "/base_link";
+            marker.header.frame_id = "/l_shoulder_pan_link";
             marker.header.stamp = ros::Time::now();
 
             marker.ns = "capability_shapes";
@@ -277,12 +274,12 @@ int main(int argc, char** argv )
 
             // Publish the marker
             marker_pub.publish(cubeMarker);
-        }
+        }*/
         for(CapabilityOcTree::leaf_iterator it = visTree->begin_leafs(), end = visTree->end_leafs(); it != end; ++it)
         {
             visualization_msgs::Marker marker;
 
-            marker.header.frame_id = "/base_link";
+            marker.header.frame_id = frame;
             marker.header.stamp = ros::Time::now();
 
             marker.ns = "capability_shapes";
@@ -297,9 +294,29 @@ int main(int argc, char** argv )
             }
             // Publish the marker
             marker_pub.publish(marker);
+
+            if (it->getCapability().getType() == CONE && it->getCapability().getHalfOpeningAngle() > 90.0)
+            {
+                marker.id = count++;
+                
+                marker.type = visualization_msgs::Marker::SPHERE;
+
+                marker.pose.position.x = it.getX();
+                marker.pose.position.y = it.getY();
+                marker.pose.position.z = it.getZ();
+
+                marker.scale.x = it.getSize();
+                marker.scale.y = it.getSize();
+                marker.scale.z = it.getSize();
+                
+                marker.color.a = 0.5;
+                
+                marker_pub.publish(marker);
+            }
         }
 
       r.sleep();
     }
+    delete visTree;
 }
 

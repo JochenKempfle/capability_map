@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <cmath>
 #include <tclap/CmdLine.h>
 
@@ -188,9 +188,9 @@ int main(int argc, char** argv )
     CapabilityOcTree* visTree = dynamic_cast<CapabilityOcTree*>(AbstractOcTree::read(pathName));
 
     ros::NodeHandle n;
-    ros::Rate r(1);
+    ros::Rate r(0.1);
 
-    ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("capability_marker", 1);
+    ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("capability_marker", 1, true);
 
     // TODO: remove tree when done debugging
     /*CapabilityOcTree tree(0.1);
@@ -275,12 +275,13 @@ int main(int argc, char** argv )
             // Publish the marker
             marker_pub.publish(cubeMarker);
         }*/
+        visualization_msgs::MarkerArray markerArray;
         for(CapabilityOcTree::leaf_iterator it = visTree->begin_leafs(), end = visTree->end_leafs(); it != end; ++it)
         {
             visualization_msgs::Marker marker;
 
             marker.header.frame_id = frame;
-            marker.header.stamp = ros::Time::now();
+            marker.header.stamp = ros::Time(0);
 
             marker.ns = "capability_shapes";
             marker.id = count++;
@@ -292,8 +293,7 @@ int main(int argc, char** argv )
             {
                 continue;
             }
-            // Publish the marker
-            marker_pub.publish(marker);
+            markerArray.markers.push_back(marker);
 
             if (it->getCapability().getType() == CONE && it->getCapability().getHalfOpeningAngle() > 90.0)
             {
@@ -311,9 +311,11 @@ int main(int argc, char** argv )
                 
                 marker.color.a = 0.5;
                 
-                marker_pub.publish(marker);
+                markerArray.markers.push_back(marker);
             }
         }
+        // Publish the marker
+        marker_pub.publish(markerArray);
 
       r.sleep();
     }

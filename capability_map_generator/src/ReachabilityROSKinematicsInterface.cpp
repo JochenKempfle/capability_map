@@ -87,8 +87,11 @@ ReachabilityROSKinematicsInterface::ReachabilityROSKinematicsInterface()
         exit(1);
     }
 
-    ros::service::waitForService(ik_solver_info_service);
-    ros::ServiceClient solver_info_client = nhP.serviceClient<kinematics_msgs::GetKinematicSolverInfo>(ik_solver_info_service);
+    ros::NodeHandle nh;
+    ros::ServiceClient solver_info_client = nh.serviceClient<kinematics_msgs::GetKinematicSolverInfo>(ik_solver_info_service);
+    if(!solver_info_client.waitForExistence()) {
+        ROS_ERROR("IK service does not exist as %s", solver_info_client.getService().c_str());
+    }
 
     // service messages for ik_solver_info
     kinematics_msgs::GetKinematicSolverInfo::Request request;

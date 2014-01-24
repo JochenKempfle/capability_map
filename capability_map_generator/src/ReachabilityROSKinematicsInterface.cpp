@@ -2,6 +2,9 @@
 #include "capability_map/CapabilityOcTreeNode.h"
 #include <pluginlib/class_list_macros.h>
 #include <pluginlib/class_loader.h>
+#include <ros/ros.h>
+#include <kinematics_msgs/GetKinematicSolverInfo.h>
+// #include <arm_kinematics_constraint_aware/arm_kinematics_constraint_aware_utils.h>
 #include <cmath>
 
 PLUGINLIB_EXPORT_CLASS(capability_map_generator::ReachabilityROSKinematicsInterface, capability_map_generator::ReachabilityInterface)
@@ -47,12 +50,65 @@ ReachabilityROSKinematicsInterface::ReachabilityROSKinematicsInterface()
 {
     ros::NodeHandle nhP("~");
     kinematics = loadKinematics(nhP);
-    kinematics->initialize("right_arm",
-            "torso_lift_link", "r_wrist_roll_link", 0.01);
+
+    std::string group_name;
+    if(!nhP.getParam("group_name", group_name))
+    {
+        ROS_ERROR("No group_name defined!");
+        ros::shutdown();
+        exit(1);
+    }
+    std::string base_name;
+    if(!nhP.getParam("base_name", base_name))
+    {
+        ROS_ERROR("No base_name defined!");
+        ros::shutdown();
+        exit(1);
+    }
+    std::string tip_name;
+    if(!nhP.getParam("tip_name", tip_name))
+    {
+        ROS_ERROR("No tip_name defined!");
+        ros::shutdown();
+        exit(1);
+    }
+
+    kinematics->initialize(group_name, base_name, tip_name, 0.01);
     ROS_ASSERT(kinematics.get() != NULL);
 
-    for(int i = 0; i < 7; i++)
-        seed.push_back(0.0);
+    // TODO: arm_kinematics_constraint_aware/arm_kinematics_constraint_aware_utils.h provides solver info
+    // kinematics_msgs::KinematicSolverInfo solverInfo;
+    // arm_kinematics_constraint_aware::getChainInfo("capability_map_generator", solverInfo);
+    std::string ik_solver_info_service;
+    if(!nhP.getParam("ik_solver_info_service", ik_solver_info_service))
+    {
+        ROS_ERROR("No ik_solver_info_service defined!");
+        ros::shutdown();
+        exit(1);
+    }
+
+    ros::service::waitForService(ik_solver_info_service);
+    ros::ServiceClient solver_info_client = nhP.serviceClient<kinematics_msgs::GetKinematicSolverInfo>(ik_solver_info_service);
+
+    // service messages for ik_solver_info
+    kinematics_msgs::GetKinematicSolverInfo::Request request;
+    kinematics_msgs::GetKinematicSolverInfo::Response response;
+
+    if(!solver_info_client.call(request, response))
+    {
+        ROS_ERROR("Could not call GetKinematicSolverInfo query service");
+        // ros::shutdown();
+        // exit(1);
+        seed.resize(7, 0.0);
+    }
+    else
+    {
+        seed.resize(response.kinematic_solver_info.joint_names.size());
+        for(size_t i = 0; i < response.kinematic_solver_info.joint_names.size(); ++i)
+        {
+            seed[i] = (response.kinematic_solver_info.limits[i].min_position + response.kinematic_solver_info.limits[i].max_position) / 2.0;
+        }
+    }
 }
 
 bool ReachabilityROSKinematicsInterface::isReachable(const octomath::Pose6D &pose) const
@@ -69,12 +125,12 @@ bool ReachabilityROSKinematicsInterface::isReachable(const octomath::Pose6D &pos
     std::vector<double> sol;
     int err;
 
-    return kinematics->getPositionIK(ikPose, seed, sol, err);
+    return kinematics->searchPositionIK(ikPose, seed, 0.5, sol, err);
 }
 
 ReachabilityInterface::BoundingBox ReachabilityROSKinematicsInterface::getBoundingBox() const
 {
-    return ReachabilityInterface::BoundingBox(Vector(-1.0, -1.0, 0.0), Vector(1.0, 1.0, 0.0));
+    return ReachabilityInterface::BoundingBox(Vector(0.0, 0.0, 0.0), Vector(0.9, -0.9, 0.0));
 }
 
 }

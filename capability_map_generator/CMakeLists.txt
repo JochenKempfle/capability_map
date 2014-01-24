@@ -37,6 +37,7 @@ rosbuild_add_gtest(CapabilityMapGeneratorTest src/CapabilityMapGeneratorTest.cpp
 target_link_libraries(CapabilityMapGeneratorTest reachability_sphere)
 
 rosbuild_add_executable(capability_map_generator src/main.cpp src/ReachabilityInterface.cpp src/ReachabilitySphere.cpp)
+rosbuild_add_executable(reachability_vis src/ReachabilityVis.cpp src/ReachabilityInterface.cpp src/ReachabilitySphere.cpp)
 
 rosbuild_add_library(reachability_dummy_interface src/ReachabilityDummyInterface.cpp)
 rosbuild_add_library(reachability_ros_kinematics_interface src/ReachabilityROSKinematicsInterface.cpp)

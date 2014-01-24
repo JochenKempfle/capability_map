@@ -1,12 +1,13 @@
 #include "capability_map_generator/ReachabilityInterface.h"
 #include "capability_map_generator/Vector.h"
 #include "capability_map_generator/ReachabilitySphere.h"
-#include "capability_map/CapabilityOcTree.h"
+#include <visualization_msgs/MarkerArray.h>
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
 #include <tclap/CmdLine.h>
 #include <string>
 #include <vector>
+#include <utility>
 
 
 static pluginlib::ClassLoader<capability_map_generator::ReachabilityInterface>* s_ReachbilityInterface = NULL;
@@ -94,12 +95,8 @@ int main(int argc, char** argv)
 
     TCLAP::ValueArg<double> resolutionArg("r", "resolution", "Distance between two voxels in meter, default is 0.1 m.", false, 0.1, "floating point");
 
-    TCLAP::ValueArg<std::string> pathNameArg("p", "path", "filename and path where the capability map will be created.\n\
-                                             Example: -p mydir/mysubdir/filename.cpm", true, "./capability_map.cpm", "string");
-
     cmd.add(numSamplesArg);
     cmd.add(resolutionArg);
-    cmd.add(pathNameArg);
 
     // parse arguments with TCLAP
     try
@@ -115,7 +112,6 @@ int main(int argc, char** argv)
     // get values from arguments
     int numSamples = numSamplesArg.getValue();
     double resolution = resolutionArg.getValue();
-    std::string pathName = pathNameArg.getValue();
     
     // check if values are valid
     if (numSamples <= 0)
@@ -131,9 +127,6 @@ int main(int argc, char** argv)
         exit(1);
     }
     
-    // create a CapabilityOcTree with resolution given by argument
-    CapabilityOcTree tree(resolution);
-    
     // get coordinates of equally distributed points over a sphere
     std::vector<capability_map_generator::Vector> spherePoints = distributePointsOnSphere(numSamples);
     
@@ -144,9 +137,9 @@ int main(int argc, char** argv)
         quaternions[i] = vectorToQuaternion(spherePoints[i]);
     }
 
-    // the reachability sphere which finally creates a capability
-    capability_map_generator::ReachabilitySphere sphere;
-    
+    // a vector of ReachabilitySpheres at specific position for displaying
+    std::vector<std::pair<capability_map_generator::Vector, capability_map_generator::ReachabilitySphere> > spheres;
+{
     // get and adjust the boundaries for iteration
     capability_map_generator::ReachabilityInterface::BoundingBox bbx = ri->getBoundingBox();
     bbx.getStartPoint();
@@ -161,6 +154,8 @@ int main(int argc, char** argv)
     // progress in percent
     double progress = 0.0;
     double updateProgress = 100.0 / (((endX - startX) / resolution) * ((endY - startY) / resolution));
+
+    capability_map_generator::ReachabilitySphere sphere;
 
     for(double x = startX; x <= endX; x += resolution)
     {
@@ -180,7 +175,7 @@ int main(int argc, char** argv)
                         sphere.appendDirection(spherePoints[i].x, spherePoints[i].y, spherePoints[i].z, false);
                     }
                 }
-                tree.setNodeCapability(x, y, z, sphere.convertToCapability());
+                spheres.push_back(std::make_pair(capability_map_generator::Vector(x, y, z), sphere));
                 sphere.clear();
             }
             progress += updateProgress;
@@ -188,10 +183,121 @@ int main(int argc, char** argv)
             fflush(stdout);
         }
     }
-    if (!tree.write(pathName))
+}
+    // start displaying spheres
+    ros::Rate r(1.0);
+
+    ros::NodeHandle n;
+    ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("reachability_marker_array", 1, true);
+
+    while (ros::ok())
     {
-        ROS_ERROR("Error: could not write to file %s", pathName.c_str());
-        exit(1);
+        unsigned int count = 0;
+        visualization_msgs::MarkerArray markerArray;
+
+        for(size_t i = 0; i < spheres.size(); ++i)
+        {
+            visualization_msgs::Marker marker;
+
+            marker.header.frame_id = "torso_lift_link";
+            marker.header.stamp = ros::Time(0);
+
+            marker.ns = "reachability_marker";
+            marker.id = count++;
+
+            marker.action = visualization_msgs::Marker::ADD;
+            marker.lifetime = ros::Duration();
+
+            capability_map_generator::Vector position = spheres[i].first;
+
+            marker.type = visualization_msgs::Marker::SPHERE;
+
+            marker.pose.position.x = position.x;
+            marker.pose.position.y = position.y;
+            marker.pose.position.z = position.z;
+
+            marker.scale.x = resolution - resolution/10.0;
+            marker.scale.y = resolution - resolution/10.0;
+            marker.scale.z = resolution - resolution/10.0;
+
+            marker.color.r = 0.0;
+            marker.color.g = 0.3;
+            marker.color.b = 1.0;
+            marker.color.a = 1.0;
+                
+            markerArray.markers.push_back(marker);
+
+            std::vector<capability_map_generator::Vector> reachables = spheres[i].second.getReachableDirections();
+            std::vector<capability_map_generator::Vector> unreachables = spheres[i].second.getUnreachableDirections();
+
+            geometry_msgs::Point start, end;
+
+            marker.type = visualization_msgs::Marker::LINE_LIST;
+
+            marker.pose.position.x = 0.0;
+            marker.pose.position.y = 0.0;
+            marker.pose.position.z = 0.0;
+
+            marker.scale.x = 0.0015;
+            marker.scale.y = 0.0;
+            marker.scale.z = 0.0;
+
+            for (size_t j = 0; j < reachables.size(); ++j)
+            {
+                start.x = position.x - reachables[j].x * resolution / 2.0;
+                start.y = position.y - reachables[j].y * resolution / 2.0;
+                start.z = position.z - reachables[j].z * resolution / 2.0;
+
+                end.x = position.x;
+                end.y = position.y;
+                end.z = position.z;
+
+                marker.points.push_back(start);
+                marker.points.push_back(end);
+            }
+            marker.color.r = 0.0;
+            marker.color.g = 1.0;
+            marker.color.b = 0.0;
+            marker.color.a = 1.0;
+
+            marker.id = count++;
+            markerArray.markers.push_back(marker);
+
+            marker.points.clear();
+
+            for (size_t j = 0; j < unreachables.size(); ++j)
+            {
+                start.x = position.x - unreachables[j].x * resolution / 2.0;
+                start.y = position.y - unreachables[j].y * resolution / 2.0;
+                start.z = position.z - unreachables[j].z * resolution / 2.0;
+
+                end.x = position.x;
+                end.y = position.y;
+                end.z = position.z;
+
+                marker.points.push_back(start);
+                marker.points.push_back(end);
+            }
+            marker.color.r = 1.0;
+            marker.color.g = 0.0;
+            marker.color.b = 0.0;
+            marker.color.a = 1.0;
+
+            marker.id = count++;
+            markerArray.markers.push_back(marker);
+        }
+        // Publish the marker
+        marker_pub.publish(markerArray);
+
+        // sleep a while but listen to ros::ok()
+        for (int i = 0; i < 10; ++i)
+        {
+            if (!ros::ok())
+            {
+                break;
+            }
+            r.sleep();
+        }
     }
 }
 

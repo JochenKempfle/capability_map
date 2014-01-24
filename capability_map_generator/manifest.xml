@@ -12,6 +12,8 @@
   <depend package="capability_map"/>
   <depend package="pluginlib"/>
   <depend package="kinematics_base"/>
+  <depend package="visualization_msgs"/>
+  <depend package="kinematics_msgs"/>
   <rosdep name="eigen" />
 
   <export>

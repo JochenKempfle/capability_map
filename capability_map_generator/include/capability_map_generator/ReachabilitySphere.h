@@ -29,6 +29,12 @@ class ReachabilitySphere
     // removes all appended directions
     void clear();
 
+    // get reachable directions
+    std::vector<Vector> getReachableDirections() const { return _reachableDirections; }
+
+    // get unreachable directions
+    std::vector<Vector> getUnreachableDirections() const { return _unreachableDirections; }
+
     Capability convertToCapability();
 
 

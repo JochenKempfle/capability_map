@@ -188,7 +188,7 @@ int main(int argc, char** argv )
     CapabilityOcTree* visTree = dynamic_cast<CapabilityOcTree*>(AbstractOcTree::read(pathName));
 
     ros::NodeHandle n;
-    ros::Rate r(0.1);
+    ros::Rate r(1.0);
 
     ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("capability_marker", 1, true);
 
@@ -317,7 +317,15 @@ int main(int argc, char** argv )
         // Publish the marker
         marker_pub.publish(markerArray);
 
-      r.sleep();
+        // sleep a while but listen to ros::ok()
+        for (int i = 0; i < 10; ++i)
+        {
+            if (!ros::ok())
+            {
+                break;
+            }
+            r.sleep();
+        }
     }
     delete visTree;
 }

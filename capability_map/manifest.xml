@@ -14,7 +14,7 @@
   <depend package="geometry_msgs"/>
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lcapability_map"/>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lcapability_octree"/>
   </export>
 
 </package>

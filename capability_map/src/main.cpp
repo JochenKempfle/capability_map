@@ -57,7 +57,14 @@ int main(int argc, char **argv)
 
     std::string pathName = pathNameArg.getValue();
 
-    tree = dynamic_cast<CapabilityOcTree*>(AbstractOcTree::read(pathName));
+    tree = CapabilityOcTree::readFile(pathName);
+
+    if (tree == NULL)
+    {
+        ROS_ERROR("Could not load capability map in file %s", pathName.c_str());
+        ros::shutdown();
+        exit(1);
+    }
 
     ros::ServiceServer service = n.advertiseService("capability_map", isReachable);
   

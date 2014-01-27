@@ -325,9 +325,12 @@ TEST(CapabilityOcTree, read_writeBinary)
     tree.setNodeCapability(2.0, 1.0, 1.0, CYLINDER_1, 20.0, 20.0, 10.0);
     tree.setNodeCapability(2.0, 2.0, 1.0, CYLINDER_2, 20.0, 20.0, 10.0);
 
-    tree.write("./test_tree.cpm");
+    tree.setBaseName("base");
+    tree.setTipName("tip");
 
-    CapabilityOcTree* tree2 = dynamic_cast<CapabilityOcTree*>(AbstractOcTree::read("./test_tree.cpm"));
+    tree.writeFile("./test_tree.cpm");
+
+    CapabilityOcTree* tree2 = CapabilityOcTree::readFile("./test_tree.cpm");
 
     remove("./test_tree.cpm");
 
@@ -336,6 +339,24 @@ TEST(CapabilityOcTree, read_writeBinary)
     ASSERT_TRUE(tree.getNodeCapability(1.2, 1.2, 1.0) == tree2->getNodeCapability(1.2, 1.2, 1.0));
     ASSERT_TRUE(tree.getNodeCapability(2.0, 1.0, 1.0) == tree2->getNodeCapability(2.0, 1.0, 1.0));
     ASSERT_TRUE(tree.getNodeCapability(2.0, 2.0, 1.0) == tree2->getNodeCapability(2.0, 2.0, 1.0));
+
+    ASSERT_EQ(tree.getBaseName(), tree2->getBaseName());
+    ASSERT_EQ(tree.getTipName(), tree2->getTipName());
+
+    delete tree2;
+
+    // test if empty or whitespaced base and tip names are written and read
+    tree.setBaseName(" ");
+    tree.setTipName("");
+
+    tree.writeFile("./test_tree.cpm");
+
+    tree2 = CapabilityOcTree::readFile("./test_tree.cpm");
+
+    remove("./test_tree.cpm");
+
+    ASSERT_EQ(tree.getBaseName(), tree2->getBaseName());
+    ASSERT_EQ(tree.getTipName(), tree2->getTipName());
 
     delete tree2;
 }

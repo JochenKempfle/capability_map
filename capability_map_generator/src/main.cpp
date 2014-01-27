@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 
     ROS_ASSERT(ri);
     
-    TCLAP::CmdLine cmd("Generates a capability map", ' ', "1.0");
+    TCLAP::CmdLine cmd("Generates a capability map of the region specified by given bounding box.", ' ', "1.0");
 
     TCLAP::ValueArg<unsigned int> numSamplesArg("n", "numSamples", "Number of samples per voxel. Default is 200.", false, 200, "integer");
 
@@ -97,9 +97,21 @@ int main(int argc, char** argv)
     TCLAP::ValueArg<std::string> pathNameArg("p", "path", "filename and path where the capability map will be created.\n\
                                              Example: -p mydir/mysubdir/filename.cpm", true, "./capability_map.cpm", "string");
 
+    TCLAP::MultiArg<double> xArg("x", "x-pos", "The start/end point of the bounding box in x-direction\n\
+                                             Example: -x 0.1 -x 2.3", true, "floating point");
+
+    TCLAP::MultiArg<double> yArg("y", "y-pos", "The start/end point of the bounding box in y-direction\n\
+                                             Example: -y 0.1 -y 2.3", true, "floating point");
+
+    TCLAP::MultiArg<double> zArg("z", "z-pos", "The start/end point of the bounding box in z-direction\n\
+                                             Example: -z 0.1 -z 2.3", true, "floating point");
+
     cmd.add(numSamplesArg);
     cmd.add(resolutionArg);
     cmd.add(pathNameArg);
+    cmd.add(xArg);
+    cmd.add(yArg);
+    cmd.add(zArg);
 
     // parse arguments with TCLAP
     try
@@ -109,6 +121,7 @@ int main(int argc, char** argv)
     catch (TCLAP::ArgException &e)  // catch any exceptions
     {
         ROS_ERROR("Error: %s for argument %s", e.error().c_str(), e.argId().c_str());
+        ros::shutdown();
         exit(1);
     }
     
@@ -122,17 +135,57 @@ int main(int argc, char** argv)
     {
         // TODO: maybe set numSamples to default and inform the user
         ROS_ERROR("Error: number of samples must be positive and greater than 0");
+        ros::shutdown();
         exit(1);
     }
     if (resolution <= 0.0)
     {
         // TODO: maybe set numSamples to default and inform the user
         ROS_ERROR("Error: resolution must be positive and greater than 0.0");
+        ros::shutdown();
+        exit(1);
+    }
+
+    if (xArg.getValue().size() != 2)
+    {
+        ROS_ERROR("Error: Exactly 2 values for x-position must be given as argument");
+        ros::shutdown();
+        exit(1);
+    }
+    else if (xArg.getValue().size() != 2)
+    {
+        ROS_ERROR("Error: Exactly 2 values for y-position must be given as argument");
+        ros::shutdown();
+        exit(1);
+    }
+    else if (xArg.getValue().size() != 2)
+    {
+        ROS_ERROR("Error: Exactly 2 values for z-position must be given as argument");
+        ros::shutdown();
         exit(1);
     }
     
     // create a CapabilityOcTree with resolution given by argument
     CapabilityOcTree tree(resolution);
+
+    std::string base_name;
+    if(!nhPriv.getParam("base_name", base_name))
+    {
+        ROS_ERROR("No base_name defined!");
+        ros::shutdown();
+        exit(1);
+    }
+    std::string tip_name;
+    if(!nhPriv.getParam("tip_name", tip_name))
+    {
+        ROS_ERROR("No tip_name defined!");
+        ros::shutdown();
+        exit(1);
+    }
+
+    tree.setBaseName(base_name);
+    tree.setTipName(tip_name);
+
     
     // get coordinates of equally distributed points over a sphere
     std::vector<capability_map_generator::Vector> spherePoints = distributePointsOnSphere(numSamples);
@@ -148,19 +201,37 @@ int main(int argc, char** argv)
     capability_map_generator::ReachabilitySphere sphere;
     
     // get and adjust the boundaries for iteration
-    capability_map_generator::ReachabilityInterface::BoundingBox bbx = ri->getBoundingBox();
-    bbx.getStartPoint();
+    // capability_map_generator::ReachabilityInterface::BoundingBox bbx = ri->getBoundingBox();
 
+    /*
     double startX = bbx.getStartPoint().x < bbx.getEndPoint().x ? bbx.getStartPoint().x : bbx.getEndPoint().x;
     double endX = bbx.getStartPoint().x < bbx.getEndPoint().x ? bbx.getEndPoint().x : bbx.getStartPoint().x;
     double startY = bbx.getStartPoint().y < bbx.getEndPoint().y ? bbx.getStartPoint().y : bbx.getEndPoint().y;
     double endY = bbx.getStartPoint().y < bbx.getEndPoint().y ? bbx.getEndPoint().y : bbx.getStartPoint().y;
     double startZ = bbx.getStartPoint().z < bbx.getEndPoint().z ? bbx.getStartPoint().z : bbx.getEndPoint().z;
     double endZ = bbx.getStartPoint().z < bbx.getEndPoint().z ? bbx.getEndPoint().z : bbx.getStartPoint().z;
+    */
 
+    // get and adjust the boundaries for iteration
+    double startX = xArg.getValue()[0] < xArg.getValue()[1] ? xArg.getValue()[0] : xArg.getValue()[1];
+    double endX = xArg.getValue()[0] < xArg.getValue()[1] ? xArg.getValue()[1] : xArg.getValue()[0];
+    double startY = yArg.getValue()[0] < yArg.getValue()[1] ? yArg.getValue()[0] : yArg.getValue()[1];
+    double endY = yArg.getValue()[0] < yArg.getValue()[1] ? yArg.getValue()[1] : yArg.getValue()[0];
+    double startZ = zArg.getValue()[0] < zArg.getValue()[1] ? zArg.getValue()[0] : zArg.getValue()[1];
+    double endZ = zArg.getValue()[0] < zArg.getValue()[1] ? zArg.getValue()[1] : zArg.getValue()[0];
+
+    // wether the computation was aborted or not and at which position
+    bool aborted = false;
+    double abortPosX, abortPosY, abortPosZ;
+
+    double numCapsToCompute = ((endX - startX) / resolution + 1.0) * ((endY - startY) / resolution + 1.0)
+                              * ((endZ - startZ) / resolution + 1.0); 
     // progress in percent
     double progress = 0.0;
-    double updateProgress = 100.0 / (((endX - startX) / resolution) * ((endY - startY) / resolution));
+    double updateProgress = 100.0 / numCapsToCompute;
+    double progressLimiter = 0.0;
+
+    ros::Time startTime = ros::Time::now();
 
     for(double x = startX; x <= endX; x += resolution)
     {
@@ -182,16 +253,80 @@ int main(int argc, char** argv)
                 }
                 tree.setNodeCapability(x, y, z, sphere.convertToCapability());
                 sphere.clear();
+
+                progress += updateProgress;
+                if (progress > progressLimiter)
+                {
+                    progressLimiter = progress + 0.1;
+                    printf("progress: %3.2f%%\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", progress);
+                    fflush(stdout);
+                }
+
+                if (!ros::ok())
+                {
+                    // the computation was aborted, remember actual x, y and z values
+                    aborted = true;
+                    abortPosX = x;
+                    abortPosY = y;
+                    abortPosZ = z;
+                    break;
+                }
             }
-            progress += updateProgress;
-            printf("progress: %3.1f%%\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", progress);
-            fflush(stdout);
+            if (aborted)
+            {
+                break;
+            }
+        }
+        if (aborted)
+        {
+            break;
         }
     }
-    if (!tree.write(pathName))
+
+    ros::Time endTime = ros::Time::now();
+
+    if (aborted)
     {
-        ROS_ERROR("Error: could not write to file %s", pathName.c_str());
+        printf("Aborted at x: %g, y: %g, z: %g\n", abortPosX, abortPosY, abortPosZ);
+        size_t numCapsComputed = ((abortPosX - startX) / resolution + 1.0) * ((endY - startY) / resolution + 1.0)
+                                 * ((endZ - startZ) / resolution + 1.0) - ((abortPosY - startY) / resolution + 1.0)
+                                 * ((abortPosZ - startZ) / resolution + 1.0) - ((abortPosZ - startZ) / resolution + 1.0);
+        printf("Successfully computed %d of %d capabilities, %d capabilities are left.\n", numCapsComputed, (size_t)numCapsToCompute,
+                                                                                           (size_t)numCapsToCompute - numCapsComputed);
+    }
+    else
+    {
+        printf("done              \n");
+        printf("Successfully computed %d capabilities.\n", (size_t)numCapsToCompute);
+    }
+
+    int secs = int((endTime - startTime).toSec());
+    int hours = secs / 3600;
+    secs %= 3600;
+    int mins = secs / 60;
+    secs %= 60;
+    printf("Time passed: %d h %d min %d sec\n", hours, mins, secs);
+
+    if (!tree.writeFile(pathName))
+    {
+        ROS_ERROR("Error: could not write to file %s.\n", pathName.c_str());
+        ros::shutdown();
         exit(1);
+    }
+    else
+    {
+        printf("Capability map written to file %s.\n", pathName.c_str());
+    }
+
+    if (aborted)
+    {
+        printf("\nThe already computed part of the capability map doesn't need to be recalculated.");
+        printf("Simply restart the program with following arguments:\n");
+        printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
+                                      numSamples, resolution, abortPosX, endX, startY, endY, startZ, endZ);
+        printf("When finished start merge_capability_maps as follows:\n");
+        printf("rosrun capability_map_generator merge_capability_maps -i %s -i %s -o %s\n\n", pathName.c_str(),
+                                                               (pathName + "_2").c_str(), pathName.c_str());
     }
 }
 

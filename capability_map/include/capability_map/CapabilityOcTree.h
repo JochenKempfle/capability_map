@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include <octomap/OcTreeBase.h>
+#include <fstream>
+#include <string>
+#include <iostream>
 #include "./CapabilityOcTreeNode.h"
 
 #ifndef CAPABILITYOCTREE_H
@@ -16,7 +19,7 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
     FRIEND_TEST(CapabilityOcTree, constructor);
 
     // Default constructor, sets resolution of leafs
-    CapabilityOcTree(double resolution) : OcTreeBase<CapabilityOcTreeNode>(resolution) {};
+    CapabilityOcTree(double resolution) : OcTreeBase<CapabilityOcTreeNode>(resolution) {}
 
     // virtual constructor: creates a new object of same type
     // (Covariant return type requires an up-to-date compiler)
@@ -24,6 +27,11 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
 
     std::string getTreeType() const { return "CapabilityOcTree"; }
 
+    // creates a new CapabilityOcTree from given file (you need to delete the created tree yourself)
+    static CapabilityOcTree* readFile(const std::string &filename);
+
+    // writes the CapabilityOcTree to file
+    bool writeFile(const std::string &filename);
 
     FRIEND_TEST(CapabilityOcTree, set_getNodeCapability);
 
@@ -45,6 +53,11 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
     // test if a certain 5 DOF pose is possible
     bool isPosePossible(const double &x, const double &y, const double &z, const double &phi, const double &theta) const;
 
+    void setBaseName(const std::string &name) { _baseName = name; }
+    std::string getBaseName() const { return _baseName; }
+
+    void setTipName(const std::string &name) { _tipName = name; }
+    std::string getTipName() const { return _tipName; }
 
   protected:
 
@@ -67,6 +80,10 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
     /// static member to ensure static initialization (only once)
     static StaticMemberInitializer capabilityOcTreeMemberInit;
 
+  private:
+
+    std::string _baseName;
+    std::string _tipName;
 };
 
 

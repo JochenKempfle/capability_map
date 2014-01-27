@@ -162,11 +162,8 @@ int main(int argc, char** argv )
 
     TCLAP::ValueArg<std::string> pathNameArg("p", "path", "Path and filename of the capability map to be visualized.\n\
                                              Example: -p mydir/mysubdir/filename.cpm", true, "./capability_map.cpm", "string");
-    TCLAP::ValueArg<std::string> frameArg("f", "frame", "Frame to which the capability map belongs.\n\
-                                             Example for the PR2: -f /torso_lift_link", true, "/torso_lift_link", "string");
 
     cmd.add(pathNameArg);
-    cmd.add(frameArg);
 
     // parse arguments with TCLAP
     try
@@ -181,11 +178,20 @@ int main(int argc, char** argv )
     }
 
     std::string pathName = pathNameArg.getValue();
-    std::string frame = frameArg.getValue();
 
-    // create a dummy CapabilityOcTree to ensure CapabilityOcTree is in classIDMappping
-    CapabilityOcTree dummy(0.1);
-    CapabilityOcTree* visTree = dynamic_cast<CapabilityOcTree*>(AbstractOcTree::read(pathName));
+    CapabilityOcTree* visTree = CapabilityOcTree::readFile(pathName);
+
+    if (visTree == NULL)
+    {
+        ROS_ERROR("Error: Capability map could not be loaded.\n");
+        ros::shutdown();
+        exit(1);
+    }
+
+    std::string frame = visTree->getBaseName();
+
+    ROS_INFO("Base frame is: %s.\n", frame.c_str());
+    ROS_INFO("Tip frame is: %s.\n", visTree->getTipName());
 
     ros::NodeHandle n;
     ros::Rate r(1.0);

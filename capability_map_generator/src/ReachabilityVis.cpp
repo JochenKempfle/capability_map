@@ -95,8 +95,20 @@ int main(int argc, char** argv)
 
     TCLAP::ValueArg<double> resolutionArg("r", "resolution", "Distance between two voxels in meter, default is 0.1 m.", false, 0.1, "floating point");
 
+    TCLAP::MultiArg<double> xArg("x", "x-pos", "The start/end point of the bounding box in x-direction\n\
+                                             Example: -x 0.1 -x 2.3", true, "floating point");
+
+    TCLAP::MultiArg<double> yArg("y", "y-pos", "The start/end point of the bounding box in y-direction\n\
+                                             Example: -y 0.1 -y 2.3", true, "floating point");
+
+    TCLAP::MultiArg<double> zArg("z", "z-pos", "The start/end point of the bounding box in z-direction\n\
+                                             Example: -z 0.1 -z 2.3", true, "floating point");
+
     cmd.add(numSamplesArg);
     cmd.add(resolutionArg);
+    cmd.add(xArg);
+    cmd.add(yArg);
+    cmd.add(zArg);
 
     // parse arguments with TCLAP
     try
@@ -126,6 +138,25 @@ int main(int argc, char** argv)
         ROS_ERROR("Error: resolution must be positive and greater than 0.0");
         exit(1);
     }
+
+    if (xArg.getValue().size() != 2)
+    {
+        ROS_ERROR("Error: Exactly 2 values for x-position must be given as argument");
+        ros::shutdown();
+        exit(1);
+    }
+    else if (xArg.getValue().size() != 2)
+    {
+        ROS_ERROR("Error: Exactly 2 values for y-position must be given as argument");
+        ros::shutdown();
+        exit(1);
+    }
+    else if (xArg.getValue().size() != 2)
+    {
+        ROS_ERROR("Error: Exactly 2 values for z-position must be given as argument");
+        ros::shutdown();
+        exit(1);
+    }
     
     // get coordinates of equally distributed points over a sphere
     std::vector<capability_map_generator::Vector> spherePoints = distributePointsOnSphere(numSamples);
@@ -139,10 +170,10 @@ int main(int argc, char** argv)
 
     // a vector of ReachabilitySpheres at specific position for displaying
     std::vector<std::pair<capability_map_generator::Vector, capability_map_generator::ReachabilitySphere> > spheres;
-{
+
     // get and adjust the boundaries for iteration
+    /*
     capability_map_generator::ReachabilityInterface::BoundingBox bbx = ri->getBoundingBox();
-    bbx.getStartPoint();
 
     double startX = bbx.getStartPoint().x < bbx.getEndPoint().x ? bbx.getStartPoint().x : bbx.getEndPoint().x;
     double endX = bbx.getStartPoint().x < bbx.getEndPoint().x ? bbx.getEndPoint().x : bbx.getStartPoint().x;
@@ -150,6 +181,15 @@ int main(int argc, char** argv)
     double endY = bbx.getStartPoint().y < bbx.getEndPoint().y ? bbx.getEndPoint().y : bbx.getStartPoint().y;
     double startZ = bbx.getStartPoint().z < bbx.getEndPoint().z ? bbx.getStartPoint().z : bbx.getEndPoint().z;
     double endZ = bbx.getStartPoint().z < bbx.getEndPoint().z ? bbx.getEndPoint().z : bbx.getStartPoint().z;
+    */
+
+    // get and adjust the boundaries for iteration
+    double startX = xArg.getValue()[0] < xArg.getValue()[1] ? xArg.getValue()[0] : xArg.getValue()[1];
+    double endX = xArg.getValue()[0] < xArg.getValue()[1] ? xArg.getValue()[1] : xArg.getValue()[0];
+    double startY = yArg.getValue()[0] < yArg.getValue()[1] ? yArg.getValue()[0] : yArg.getValue()[1];
+    double endY = yArg.getValue()[0] < yArg.getValue()[1] ? yArg.getValue()[1] : yArg.getValue()[0];
+    double startZ = zArg.getValue()[0] < zArg.getValue()[1] ? zArg.getValue()[0] : zArg.getValue()[1];
+    double endZ = zArg.getValue()[0] < zArg.getValue()[1] ? zArg.getValue()[1] : zArg.getValue()[0];
 
     // progress in percent
     double progress = 0.0;
@@ -175,6 +215,11 @@ int main(int argc, char** argv)
                         sphere.appendDirection(spherePoints[i].x, spherePoints[i].y, spherePoints[i].z, false);
                     }
                 }
+                if (!ros::ok())
+                {
+                    ros::shutdown();
+                    exit(1);
+                }
                 spheres.push_back(std::make_pair(capability_map_generator::Vector(x, y, z), sphere));
                 sphere.clear();
             }
@@ -183,7 +228,7 @@ int main(int argc, char** argv)
             fflush(stdout);
         }
     }
-}
+
     // start displaying spheres
     ros::Rate r(1.0);
 

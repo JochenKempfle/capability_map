@@ -2,6 +2,76 @@
 #include "capability_map/CapabilityOcTreeNode.h"
 
 
+CapabilityOcTree* CapabilityOcTree::readFile(const std::string &filename)
+{
+    std::ifstream file(filename.c_str(), std::ios_base::in |std::ios_base::binary);
+
+    if (!file.is_open())
+    {
+        OCTOMAP_ERROR_STR("Filestream to " << filename << " not open, nothing read.");
+        return NULL;
+    }
+
+    AbstractOcTree* abstractTree = AbstractOcTree::read(file);
+
+    if (abstractTree == NULL || abstractTree->getTreeType() != "CapabilityOcTree")
+    {
+        OCTOMAP_ERROR_STR("Could not read " << filename << ". Is the file a valid capability map?");
+        return NULL;
+    }
+
+    std::string qualifier;
+    std::string baseName;
+    std::string tipName;
+
+    while(!file.eof())
+    {
+        file >> qualifier;
+        if (qualifier == "base_name")
+        {
+            file.ignore(1, ' ');
+            std::getline(file, baseName);
+        }
+        else if (qualifier == "tip_name")
+        {
+            file.ignore(1, ' ');
+            std::getline(file, tipName);
+        }
+    }
+
+    file.close();
+
+    CapabilityOcTree* tree = dynamic_cast<CapabilityOcTree*>(abstractTree);
+
+    tree->setBaseName(baseName);
+    tree->setTipName(tipName);
+
+    return tree;
+}
+
+bool CapabilityOcTree::writeFile(const std::string &filename)
+{
+    std::ofstream file(filename.c_str(), std::ios_base::out | std::ios_base::binary);
+
+    if (!file.is_open())
+    {
+        OCTOMAP_ERROR_STR("Filestream to " << filename << " not open, nothing written.");
+        return false;
+    }
+    else
+    {
+        if (!write(file))
+        {
+            file.close();
+            OCTOMAP_ERROR_STR("Could not write to " << filename);
+            return false;
+        }
+        file << std::endl << "base_name " << _baseName << std::endl << "tip_name " << _tipName << std::endl;
+        file.close();
+    }
+    return true;
+}
+
 CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const OcTreeKey &key, const Capability &capability)
 {
     bool createdRoot = false;

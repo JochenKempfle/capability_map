@@ -43,7 +43,6 @@ ReachabilitySphere createReachabilitySphereFromCapability(Capability cap, unsign
     // spread points over a sphere
     std::vector<Vector> points = distributePointsOnSphere(numPoints);
     
-//    Capability cap(type, phi, theta, halfOpeningAngle);
     ReachabilitySphere sphere;
     
     for (size_t i = 0; i < points.size(); ++i)

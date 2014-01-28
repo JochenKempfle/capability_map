@@ -85,6 +85,7 @@ Capability ReachabilitySphere::convertToCapability()
         return Capability(CONE, phi, theta, 0.5);
     }
 
+    // TODO: current directions is only useful when filtering dataset later
     std::vector<Vector> currentDirections = _reachableDirections;
 
     // get principal components

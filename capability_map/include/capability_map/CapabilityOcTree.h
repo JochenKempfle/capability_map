@@ -15,7 +15,6 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
 {
   public:
 
-
     FRIEND_TEST(CapabilityOcTree, constructor);
 
     // Default constructor, sets resolution of leafs
@@ -32,6 +31,9 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
 
     // writes the CapabilityOcTree to file
     bool writeFile(const std::string &filename);
+
+    // returns the position at which the given coordinate ends up in the tree
+    inline double getAlignment(double coordinate) { return keyToCoord(coordToKey(coordinate)); }
 
     FRIEND_TEST(CapabilityOcTree, set_getNodeCapability);
 

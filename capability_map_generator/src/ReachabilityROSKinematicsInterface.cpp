@@ -76,9 +76,7 @@ ReachabilityROSKinematicsInterface::ReachabilityROSKinematicsInterface()
     kinematics->initialize(group_name, base_name, tip_name, 0.01);
     ROS_ASSERT(kinematics.get() != NULL);
 
-    // TODO: arm_kinematics_constraint_aware/arm_kinematics_constraint_aware_utils.h provides solver info
-    // kinematics_msgs::KinematicSolverInfo solverInfo;
-    // arm_kinematics_constraint_aware::getChainInfo("capability_map_generator", solverInfo);
+    // get solver info service string
     std::string ik_solver_info_service;
     if(!nhP.getParam("ik_solver_info_service", ik_solver_info_service))
     {
@@ -100,9 +98,9 @@ ReachabilityROSKinematicsInterface::ReachabilityROSKinematicsInterface()
     if(!solver_info_client.call(request, response))
     {
         ROS_ERROR("Could not call GetKinematicSolverInfo query service");
-        // ros::shutdown();
-        // exit(1);
-        seed.resize(7, 0.0);
+        ros::shutdown();
+        exit(1);
+        // seed.resize(7, 0.0);
     }
     else
     {

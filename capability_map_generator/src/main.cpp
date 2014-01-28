@@ -7,6 +7,7 @@
 #include <tclap/CmdLine.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 
 static pluginlib::ClassLoader<capability_map_generator::ReachabilityInterface>* s_ReachbilityInterface = NULL;
@@ -87,31 +88,43 @@ int main(int argc, char** argv)
     boost::shared_ptr<capability_map_generator::ReachabilityInterface> ri = loadReachabilityInterface(nhPriv);
 
     ROS_ASSERT(ri);
-    
-    TCLAP::CmdLine cmd("Generates a capability map of the region specified by given bounding box.", ' ', "1.0");
 
-    TCLAP::ValueArg<unsigned int> numSamplesArg("n", "numSamples", "Number of samples per voxel. Default is 200.", false, 200, "integer");
+    std::string msg = "Generates a capability map of the region specified by given bounding box.";
+    TCLAP::CmdLine cmd(msg, ' ', "1.0");
 
-    TCLAP::ValueArg<double> resolutionArg("r", "resolution", "Distance between two voxels in meter, default is 0.1 m.", false, 0.1, "floating point");
+    msg = "Number of samples per voxel. Default is 200.";
+    TCLAP::ValueArg<unsigned int> numSamplesArg("n", "numSamples", msg, false, 200, "integer");
 
-    TCLAP::ValueArg<std::string> pathNameArg("p", "path", "filename and path where the capability map will be created.\n\
-                                             Example: -p mydir/mysubdir/filename.cpm", true, "./capability_map.cpm", "string");
+    msg = "Distance between two voxels in meter, default is 0.1 m.";
+    TCLAP::ValueArg<double> resolutionArg("r", "resolution", msg, false, 0.1, "floating point");
 
-    TCLAP::MultiArg<double> xArg("x", "x-pos", "The start/end point of the bounding box in x-direction\n\
-                                             Example: -x 0.1 -x 2.3", true, "floating point");
+    msg = "filename and path where the capability map will be created.\nExample: -p mydir/mysubdir/filename.cpm";
+    TCLAP::ValueArg<std::string> pathNameArg("p", "path", msg, true, "./capability_map.cpm", "string");
 
-    TCLAP::MultiArg<double> yArg("y", "y-pos", "The start/end point of the bounding box in y-direction\n\
-                                             Example: -y 0.1 -y 2.3", true, "floating point");
+    msg = "The start/end point of the bounding box in x-direction.\n\
+           If only one x-value is given, a slice (or a point) at this position depending on y- and z-values gets computed.\n\
+           If more than 2 values are given, the boundaries are from min(x1, x2, ...) to max(x1, x2, ...).\n\
+           Example: -x -0.1 -x 2.3";
+    TCLAP::MultiArg<double> xArg("x", "x-pos", msg, true, "floating point");
 
-    TCLAP::MultiArg<double> zArg("z", "z-pos", "The start/end point of the bounding box in z-direction\n\
-                                             Example: -z 0.1 -z 2.3", true, "floating point");
+    msg = "The start/end point of the bounding box in y-direction.\n\
+           If only one y-value is given, a slice (or a point) at this position depending on x- and z-values gets computed.\n\
+           If more than 2 values are given, the boundaries are from min(y1, y2, ...) to max(y1, y2, ...).\n\
+           Example: -y -0.1 -y 2.3";
+    TCLAP::MultiArg<double> yArg("y", "y-pos", msg, true, "floating point");
 
-    cmd.add(numSamplesArg);
-    cmd.add(resolutionArg);
-    cmd.add(pathNameArg);
-    cmd.add(xArg);
-    cmd.add(yArg);
+    msg = "The start/end point of the bounding box in z-direction.\n\
+           If only one z-value is given, a slice (or a point) at this position depending on x- and y-values gets computed.\n\
+           If more than 2 values are given, the boundaries are from min(z1, z2, ...) to max(z1, z2, ...).\n\
+           Example: -z -0.1 -z 2.3";
+    TCLAP::MultiArg<double> zArg("z", "z-pos", msg, true, "floating point");
+
     cmd.add(zArg);
+    cmd.add(yArg);
+    cmd.add(xArg);
+    cmd.add(resolutionArg);
+    cmd.add(numSamplesArg);
+    cmd.add(pathNameArg);
 
     // parse arguments with TCLAP
     try
@@ -133,34 +146,13 @@ int main(int argc, char** argv)
     // check if values are valid
     if (numSamples <= 0)
     {
-        // TODO: maybe set numSamples to default and inform the user
         ROS_ERROR("Error: number of samples must be positive and greater than 0");
         ros::shutdown();
         exit(1);
     }
     if (resolution <= 0.0)
     {
-        // TODO: maybe set numSamples to default and inform the user
         ROS_ERROR("Error: resolution must be positive and greater than 0.0");
-        ros::shutdown();
-        exit(1);
-    }
-
-    if (xArg.getValue().size() != 2)
-    {
-        ROS_ERROR("Error: Exactly 2 values for x-position must be given as argument");
-        ros::shutdown();
-        exit(1);
-    }
-    else if (xArg.getValue().size() != 2)
-    {
-        ROS_ERROR("Error: Exactly 2 values for y-position must be given as argument");
-        ros::shutdown();
-        exit(1);
-    }
-    else if (xArg.getValue().size() != 2)
-    {
-        ROS_ERROR("Error: Exactly 2 values for z-position must be given as argument");
         ros::shutdown();
         exit(1);
     }
@@ -212,20 +204,31 @@ int main(int argc, char** argv)
     double endZ = bbx.getStartPoint().z < bbx.getEndPoint().z ? bbx.getEndPoint().z : bbx.getStartPoint().z;
     */
 
-    // get and adjust the boundaries for iteration
-    double startX = xArg.getValue()[0] < xArg.getValue()[1] ? xArg.getValue()[0] : xArg.getValue()[1];
-    double endX = xArg.getValue()[0] < xArg.getValue()[1] ? xArg.getValue()[1] : xArg.getValue()[0];
-    double startY = yArg.getValue()[0] < yArg.getValue()[1] ? yArg.getValue()[0] : yArg.getValue()[1];
-    double endY = yArg.getValue()[0] < yArg.getValue()[1] ? yArg.getValue()[1] : yArg.getValue()[0];
-    double startZ = zArg.getValue()[0] < zArg.getValue()[1] ? zArg.getValue()[0] : zArg.getValue()[1];
-    double endZ = zArg.getValue()[0] < zArg.getValue()[1] ? zArg.getValue()[1] : zArg.getValue()[0];
+    // get x, y and z values and sort them
+    std::vector<double> xValues = xArg.getValue();
+    std::vector<double> yValues = yArg.getValue();
+    std::vector<double> zValues = zArg.getValue();
+
+    std::sort(xValues.begin(), xValues.end());
+    std::sort(yValues.begin(), yValues.end());
+    std::sort(zValues.begin(), zValues.end());
+
+    // get and adjust the boundaries for iteration (add a small value to end due to floating point precision)
+    double startX = tree.getAlignment(xValues[0]);
+    double endX = tree.getAlignment(xValues[xValues.size() - 1]) + resolution/100.0;
+    double startY = tree.getAlignment(yValues[0]);
+    double endY = tree.getAlignment(yValues[yValues.size() - 1]) + resolution/100.0;
+    double startZ = tree.getAlignment(zValues[0]);
+    double endZ = tree.getAlignment(zValues[zValues.size() - 1]) + resolution/100.0;
 
     // wether the computation was aborted or not and at which position
     bool aborted = false;
     double abortPosX, abortPosY, abortPosZ;
 
     double numCapsToCompute = ((endX - startX) / resolution + 1.0) * ((endY - startY) / resolution + 1.0)
-                              * ((endZ - startZ) / resolution + 1.0); 
+                              * ((endZ - startZ) / resolution + 1.0);
+
+    ROS_INFO("Number of capabilities to compute: %d", (unsigned int)numCapsToCompute);
     // progress in percent
     double progress = 0.0;
     double updateProgress = 100.0 / numCapsToCompute;
@@ -309,7 +312,7 @@ int main(int argc, char** argv)
 
     if (!tree.writeFile(pathName))
     {
-        ROS_ERROR("Error: could not write to file %s.\n", pathName.c_str());
+        ROS_ERROR("Error: Could not write to file %s.\n", pathName.c_str());
         ros::shutdown();
         exit(1);
     }
@@ -322,8 +325,21 @@ int main(int argc, char** argv)
     {
         printf("\nThe already computed part of the capability map doesn't need to be recalculated.");
         printf("Simply restart the program with following arguments:\n");
-        printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
+        if (abortPosX != endX)
+        {
+            printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
                                       numSamples, resolution, abortPosX, endX, startY, endY, startZ, endZ);
+        }
+        else if (abortPosY != endY)
+        {
+            printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
+                                      numSamples, resolution, abortPosX, endX, abortPosY, endY, startZ, endZ);
+        }
+        else
+        {
+            printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
+                                      numSamples, resolution, abortPosX, endX, abortPosY, endY, abortPosZ, endZ);
+        }
         printf("When finished start merge_capability_maps as follows:\n");
         printf("rosrun capability_map_generator merge_capability_maps -i %s -i %s -o %s\n\n", pathName.c_str(),
                                                                (pathName + "_2").c_str(), pathName.c_str());

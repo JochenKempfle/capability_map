@@ -2,6 +2,8 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <cmath>
 #include <tclap/CmdLine.h>
+#include <string>
+#include <vector>
 
 #include "capability_map/CapabilityOcTree.h"
 
@@ -72,7 +74,6 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
             break;
 
         case CONE:
-            // TODO: cones with halfOpeningAngle > 90° can't be displayed (for now those are clamped to ~ 89.5°)
             marker->type = visualization_msgs::Marker::ARROW;
 
             start.x = it.getX() - (size / 2.0) * sin(thetaInRad) * cos(phiInRad);
@@ -163,6 +164,31 @@ int main(int argc, char** argv )
     TCLAP::ValueArg<std::string> pathNameArg("p", "path", "Path and filename of the capability map to be visualized.\n\
                                              Example: -p mydir/mysubdir/filename.cpm", true, "./capability_map.cpm", "string");
 
+    std::string msg;
+    msg = "Specifies the region in x-direction to be visualized.\n\
+           If no x-value is given, depending on y- and z-values, all stored capabilities in x-direction are displayed.\n\
+           If only one x-value is given, a slice (or a point) at this position depending on y- and z-values gets computed.\n\
+           If more than 2 values are given, the boundaries are from min(x1, x2, ...) to max(x1, x2, ...).\n\
+           Example: -x -0.1 -x 2.3";
+    TCLAP::MultiArg<double> xArg("x", "x-pos", msg, false, "floating point");
+
+    msg = "Specifies the region in y-direction to be visualized.\n\
+           If no y-value is given, depending on x- and z-values, all stored capabilities in y-direction are displayed.\n\
+           If only one y-value is given, a slice (or a point) at this position depending on x- and z-values gets computed.\n\
+           If more than 2 values are given, the boundaries are from min(y1, y2, ...) to max(y1, y2, ...).\n\
+           Example: -y -0.1 -y 2.3";
+    TCLAP::MultiArg<double> yArg("y", "y-pos", msg, false, "floating point");
+
+    msg = "Specifies the region in z-direction to be visualized.\n\
+           If no z-value is given, depending on x- and y-values, all stored capabilities in z-direction are displayed.\n\
+           If only one z-value is given, a slice (or a point) at this position depending on x- and y-values gets computed.\n\
+           If more than 2 values are given, the boundaries are from min(z1, z2, ...) to max(z1, z2, ...).\n\
+           Example: -z -0.1 -z 2.3";
+    TCLAP::MultiArg<double> zArg("z", "z-pos", msg, false, "floating point");
+
+    cmd.add(zArg);
+    cmd.add(yArg);
+    cmd.add(xArg);
     cmd.add(pathNameArg);
 
     // parse arguments with TCLAP
@@ -178,7 +204,6 @@ int main(int argc, char** argv )
     }
 
     std::string pathName = pathNameArg.getValue();
-
     CapabilityOcTree* visTree = CapabilityOcTree::readFile(pathName);
 
     if (visTree == NULL)
@@ -190,8 +215,41 @@ int main(int argc, char** argv )
 
     std::string frame = visTree->getBaseName();
 
-    ROS_INFO("Base frame is: %s.\n", frame.c_str());
-    ROS_INFO("Tip frame is: %s.\n", visTree->getTipName());
+    ROS_INFO("Base frame is: %s.", frame.c_str());
+    ROS_INFO("Tip frame is: %s.", visTree->getTipName().c_str());
+    ROS_INFO("Resolution is: %g\n", visTree->getResolution());
+
+    // get x, y and z values and sort them
+    std::vector<double> xValues = xArg.getValue();
+    std::vector<double> yValues = yArg.getValue();
+    std::vector<double> zValues = zArg.getValue();
+
+    std::sort(xValues.begin(), xValues.end());
+    std::sort(yValues.begin(), yValues.end());
+    std::sort(zValues.begin(), zValues.end());
+
+    bool xIsSet = xValues.size() > 0 ? true : false;
+    bool yIsSet = yValues.size() > 0 ? true : false;
+    bool zIsSet = zValues.size() > 0 ? true : false;
+
+    double startX = 0.0, endX = 0.0, startY = 0.0, endY = 0.0, startZ = 0.0, endZ = 0.0;
+
+    // get and adjust the boundaries for iteration (add a small value to end due to floating point precision)
+    if (xIsSet)
+    {
+        startX = visTree->getAlignment(xValues[0]);
+        endX = visTree->getAlignment(xValues[xValues.size() - 1]) + visTree->getResolution()/100.0;
+    }
+    if (yIsSet)
+    {
+        startY = visTree->getAlignment(yValues[0]);
+        endY = visTree->getAlignment(yValues[yValues.size() - 1]) + visTree->getResolution()/100.0;
+    }
+    if (zIsSet)
+    {
+        startZ = visTree->getAlignment(zValues[0]);
+        endZ = visTree->getAlignment(zValues[zValues.size() - 1]) + visTree->getResolution()/100.0;
+    }
 
     ros::NodeHandle n;
     ros::Rate r(1.0);
@@ -282,8 +340,23 @@ int main(int argc, char** argv )
             marker_pub.publish(cubeMarker);
         }*/
         visualization_msgs::MarkerArray markerArray;
-        for(CapabilityOcTree::leaf_iterator it = visTree->begin_leafs(), end = visTree->end_leafs(); it != end; ++it)
+        for (CapabilityOcTree::leaf_iterator it = visTree->begin_leafs(), end = visTree->end_leafs(); it != end; ++it)
         {
+            // if not inside boundaries, skip actual capability
+            double eps = 0.000001;
+            if (xIsSet && (it.getX() + eps < startX || it.getX() - eps > endX))
+            {
+                continue;
+            }
+            if (yIsSet && (it.getY() + eps < startY || it.getY() - eps > endY))
+            {
+                continue;
+            }
+            if (zIsSet && (it.getZ() + eps < startZ || it.getZ() - eps > endZ))
+            {
+                continue;
+            }
+
             visualization_msgs::Marker marker;
 
             marker.header.frame_id = frame;
@@ -295,6 +368,7 @@ int main(int argc, char** argv )
             marker.action = visualization_msgs::Marker::ADD;
             marker.lifetime = ros::Duration();
 
+            // skip empty capabilities
             if (!getMarkerFromCapIterator(&marker, it))
             {
                 continue;

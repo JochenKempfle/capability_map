@@ -2,7 +2,7 @@
     <include file="$(find pr2_description)/robots/upload_pr2.launch"/>
     <include file="$(find pr2_arm_kinematics)/launch/pr2_ik_rarm_node.launch"/>
 
-    <node pkg="capability_map_generator" type="capability_map_generator" name="capability_map_generator" args="-p $(find capability_map_generator)/maps/pr2_map.cpm -n 200 -r 0.05 -x 0.0 -x 0.9 -y 0.0 -y -0.9 -z 0.0 -z 0.0" output="screen">
+    <node pkg="capability_map_generator" type="capability_map_generator" name="capability_map_generator" args="-p $(find capability_map_generator)/maps/pr2_map.cpm -n 200 -r 0.05 -x 0.0 -x 0.9 -y 0.0 -y -0.9 -z 0.0 -z 0.2" output="screen">
         <param name="reachability_interface" value="capability_map_generator::ReachabilityROSKinematicsInterface"/>
         <param name="kinematics_interface" value="pr2_arm_kinematics/PR2ArmKinematicsPlugin"/>
         <param name="ik_solver_info_service" value="pr2_right_arm_kinematics/get_ik_solver_info" />

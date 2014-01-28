@@ -91,7 +91,7 @@ CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const double &x, const
     OcTreeKey key;
     // NOTE: there is a bug in creating a key. Floating point precision seems to cause the error
     // adding a small amount (1% of resolution) to x, y and z should handle this
-    double correctionValue = resolution/100;
+    double correctionValue = resolution/100.0;
     if (!this->coordToKeyChecked(x + correctionValue, y + correctionValue, z + correctionValue, key))
     {
         return NULL;
@@ -105,7 +105,7 @@ CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const double &x, const
     OcTreeKey key;
     // NOTE: there is a bug in creating a key. Floating point precision seems to cause the error
     // adding a small amount (1% of resolution) to x, y and z should handle this
-    double correctionValue = resolution/100;
+    double correctionValue = resolution/100.0;
     if (!this->coordToKeyChecked(x + correctionValue, y + correctionValue, z + correctionValue, key))
     {
         return NULL;
@@ -118,7 +118,7 @@ Capability CapabilityOcTree::getNodeCapability(const double &x, const double &y,
 {
     // NOTE: there is a bug in creating a key. Floating point precision seems to cause the error
     // adding a small amount (1% of resolution) to x, y and z should handle this
-    double correctionValue = resolution/100;
+    double correctionValue = resolution/100.0;
     return search(x + correctionValue, y + correctionValue, z + correctionValue)->getCapability();
 }
 

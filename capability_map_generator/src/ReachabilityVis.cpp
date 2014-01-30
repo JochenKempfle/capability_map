@@ -1,6 +1,7 @@
 #include "capability_map_generator/ReachabilityInterface.h"
 #include "capability_map_generator/Vector.h"
 #include "capability_map_generator/ReachabilitySphere.h"
+#include "capability_map/CapabilityOcTree.h"
 #include <visualization_msgs/MarkerArray.h>
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
@@ -183,17 +184,26 @@ int main(int argc, char** argv)
     std::sort(yValues.begin(), yValues.end());
     std::sort(zValues.begin(), zValues.end());
 
-    // get and adjust the boundaries for iteration
-    double startX = xValues[0];
-    double endX = xValues[xValues.size() - 1];
-    double startY = yValues[0];
-    double endY = yValues[yValues.size() - 1];
-    double startZ = zValues[0];
-    double endZ = zValues[zValues.size() - 1];
+    // create a dummy tree to get alignment
+    CapabilityOcTree tree(resolution);
+
+    // get and adjust the boundaries for iteration (add a small value to end due to floating point precision)
+    double startX = tree.getAlignment(xValues[0]);
+    double endX = tree.getAlignment(xValues[xValues.size() - 1]) + resolution/100.0;
+    double startY = tree.getAlignment(yValues[0]);
+    double endY = tree.getAlignment(yValues[yValues.size() - 1]) + resolution/100.0;
+    double startZ = tree.getAlignment(zValues[0]);
+    double endZ = tree.getAlignment(zValues[zValues.size() - 1]) + resolution/100.0;
+
+    double numCapsToCompute = ((endX - startX) / resolution + 1.0) * ((endY - startY) / resolution + 1.0)
+                              * ((endZ - startZ) / resolution + 1.0);
+    double numCapsComputed = 0.0;
+
+    ROS_INFO("Number of capabilities to compute: %d", (unsigned int)numCapsToCompute);
 
     // progress in percent
     double progress = 0.0;
-    double updateProgress = 100.0 / (((endX - startX) / resolution) * ((endY - startY) / resolution));
+    double progressLimiter = 0.0;
 
     capability_map_generator::ReachabilitySphere sphere;
 
@@ -222,12 +232,20 @@ int main(int argc, char** argv)
                 }
                 spheres.push_back(std::make_pair(capability_map_generator::Vector(x, y, z), sphere));
                 sphere.clear();
+
+                numCapsComputed += 1.0;
+                progress = 100.0 * numCapsComputed / numCapsToCompute;
+                if (progress > progressLimiter)
+                {
+                    progressLimiter = progress + 0.1;
+                    printf("progress: %3.2f%%\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", progress);
+                    fflush(stdout);
+                }
             }
-            progress += updateProgress;
-            printf("progress: %3.1f%%\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", progress);
-            fflush(stdout);
         }
     }
+
+    printf("done                 \n");
 
     // start displaying spheres
     ros::Rate r(1.0);

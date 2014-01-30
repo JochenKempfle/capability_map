@@ -1,16 +1,15 @@
 <package>
-  <description brief="capability_vis">
+  <description brief="capability_eval">
 
-     capability_vis
+     capability_eval
 
   </description>
   <author>Jochen</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/capability_vis</url>
+  <url>http://ros.org/wiki/capability_eval</url>
   <depend package="roscpp"/>
   <depend package="capability_map"/>
-  <depend package="visualization_msgs"/>
 
 </package>
 

@@ -110,6 +110,9 @@ Capability ReachabilitySphere::convertToCapability()
     // the eigenvector with the smallest eigenvalue is chosen to be the cylinder_2's axis
     std::pair<double, double> cylinder_2Pair = fitCylinder_2(eigenVectors[0]);
 
+    double sphereSFE = 100.0 * (double)_unreachableDirections.size() / (double)_reachableDirections.size();
+    sphereSFE = sphereSFE > 100.0 ? 100.0 : sphereSFE;
+
     Capability retCapability;
 
     // select the shape type with smallest shapeFitError and create a capability
@@ -119,6 +122,11 @@ Capability ReachabilitySphere::convertToCapability()
         double phi = atan2(eigenVectors[0].y, eigenVectors[0].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[0].z) * 180.0 / M_PI;
 
+        // try to fit a sphere
+        if (conePair.second >= sphereSFE)
+        {
+            retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
+        }
         retCapability = Capability(CONE, phi, theta, conePair.first, conePair.second);
     }
     else if (cylinder_1Pair.second < cylinder_2Pair.second)
@@ -127,6 +135,11 @@ Capability ReachabilitySphere::convertToCapability()
         double phi = atan2(eigenVectors[2].y, eigenVectors[2].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[2].z) * 180.0 / M_PI;
 
+        // try to fit a sphere
+        if (cylinder_1Pair.second >= sphereSFE)
+        {
+            retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
+        }
         retCapability = Capability(CYLINDER_1, phi, theta, cylinder_1Pair.first, cylinder_1Pair.second);
     }
     else
@@ -135,6 +148,11 @@ Capability ReachabilitySphere::convertToCapability()
         double phi = atan2(eigenVectors[0].y, eigenVectors[0].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[0].z) * 180.0 / M_PI;
 
+        // try to fit a sphere
+        if (cylinder_2Pair.second >= sphereSFE)
+        {
+            retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
+        }
         retCapability = Capability(CYLINDER_2, phi, theta, cylinder_2Pair.first, cylinder_2Pair.second);
     }
 
@@ -449,6 +467,12 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) 
             bestShapeFitError = shapeFitError;
             bestAngle = reachableOrthodromeAngles[i - 1];
         }
+    }
+
+    // in the case there is just one direction covered, a cylinder_2 type is not a good decision
+    if (numReachableDirections - reachableMissed < 2)
+    {
+        bestShapeFitError = 1.0;
     }
 
     bestShapeFitError *= 100.0;

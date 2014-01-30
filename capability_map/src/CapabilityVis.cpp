@@ -8,6 +8,45 @@
 #include "capability_map/CapabilityOcTree.h"
 
 
+void setMarkerColor(visualization_msgs::Marker* marker, double value)
+{
+    if (value < 0.0)
+    {
+        value = 0.0;
+    }
+    else if (value > 1.0)
+    {
+        value = 1.0;
+    }
+
+    if (value <= 0.25)
+    {
+        marker->color.r = 0.0;
+        marker->color.g = value * 4.0;
+        marker->color.b = 1.0;
+    }
+    else if (value <= 0.5)
+    {
+        marker->color.r = 0.0;
+        marker->color.g = 1.0;
+        marker->color.b = 1.0 - (value - 0.25) * 4.0 ;
+    }
+    else if (value <= 0.75)
+    {
+        marker->color.r = (value - 0.5) * 4.0;
+        marker->color.g = 1.0;
+        marker->color.b = 0.0;
+    }
+    else
+    {
+        marker->color.r = 1.0;
+        marker->color.g = 1.0 - (value - 0.75) * 4.0;
+        marker->color.b = 0.0;
+    }
+    marker->color.a = 1.0;
+}
+
+
 bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const CapabilityOcTree::leaf_iterator &it)
 {
     // nothing to do, return false
@@ -142,12 +181,6 @@ bool getMarkerFromCapIterator(visualization_msgs::Marker* marker, const Capabili
             retVal = false;
     }
 
-    // set color according to shape fit error
-    marker->color.r = it->getCapability().getShapeFitError() / 100.0;
-    marker->color.g = 0.5 - it->getCapability().getShapeFitError() / 200.0;
-    marker->color.b = 1.0 - it->getCapability().getShapeFitError() / 100.0;
-    marker->color.a = 1.0;
-
     return retVal;
 }
 
@@ -186,9 +219,17 @@ int main(int argc, char** argv )
            Example: -z -0.1 -z 2.3";
     TCLAP::MultiArg<double> zArg("z", "z-pos", msg, false, "floating point");
 
+    msg = "If set, shows the capability shapes in a color depending on the surface area which is reachable";
+    TCLAP::SwitchArg areaArg("a", "area", msg, false);
+
+    msg = "If set, shows a color table from blue = best to red = worst";
+    TCLAP::SwitchArg colorArg("c", "colortable", msg, false);
+
     cmd.add(zArg);
     cmd.add(yArg);
     cmd.add(xArg);
+    cmd.add(colorArg);
+    cmd.add(areaArg);
     cmd.add(pathNameArg);
 
     // parse arguments with TCLAP
@@ -203,21 +244,24 @@ int main(int argc, char** argv )
         exit(1);
     }
 
-    std::string pathName = pathNameArg.getValue();
-    CapabilityOcTree* visTree = CapabilityOcTree::readFile(pathName);
+    bool showAreaColor = areaArg.getValue();
+    bool showColorTable = colorArg.getValue();
 
-    if (visTree == NULL)
+    std::string pathName = pathNameArg.getValue();
+    CapabilityOcTree* tree = CapabilityOcTree::readFile(pathName);
+
+    if (tree == NULL)
     {
         ROS_ERROR("Error: Capability map could not be loaded.\n");
         ros::shutdown();
         exit(1);
     }
 
-    std::string frame = visTree->getBaseName();
+    std::string frame = tree->getBaseName();
 
     ROS_INFO("Base frame is: %s.", frame.c_str());
-    ROS_INFO("Tip frame is: %s.", visTree->getTipName().c_str());
-    ROS_INFO("Resolution is: %g\n", visTree->getResolution());
+    ROS_INFO("Tip frame is: %s.", tree->getTipName().c_str());
+    ROS_INFO("Resolution is: %g\n", tree->getResolution());
 
     // get x, y and z values and sort them
     std::vector<double> xValues = xArg.getValue();
@@ -237,18 +281,18 @@ int main(int argc, char** argv )
     // get and adjust the boundaries for iteration (add a small value to end due to floating point precision)
     if (xIsSet)
     {
-        startX = visTree->getAlignment(xValues[0]);
-        endX = visTree->getAlignment(xValues[xValues.size() - 1]) + visTree->getResolution()/100.0;
+        startX = tree->getAlignment(xValues[0]);
+        endX = tree->getAlignment(xValues[xValues.size() - 1]) + tree->getResolution()/100.0;
     }
     if (yIsSet)
     {
-        startY = visTree->getAlignment(yValues[0]);
-        endY = visTree->getAlignment(yValues[yValues.size() - 1]) + visTree->getResolution()/100.0;
+        startY = tree->getAlignment(yValues[0]);
+        endY = tree->getAlignment(yValues[yValues.size() - 1]) + tree->getResolution()/100.0;
     }
     if (zIsSet)
     {
-        startZ = visTree->getAlignment(zValues[0]);
-        endZ = visTree->getAlignment(zValues[zValues.size() - 1]) + visTree->getResolution()/100.0;
+        startZ = tree->getAlignment(zValues[0]);
+        endZ = tree->getAlignment(zValues[zValues.size() - 1]) + tree->getResolution()/100.0;
     }
 
     ros::NodeHandle n;
@@ -256,10 +300,22 @@ int main(int argc, char** argv )
 
     ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("capability_marker", 1, true);
 
-    // TODO: remove tree when done debugging
-    /*CapabilityOcTree tree(0.1);
+    // TODO: remove testTree when done debugging (or better create a map with example capabilities)
+ /*   CapabilityOcTree testTree(0.1);
 
-    Capability emptyCap;
+    Capability cap0(SPHERE, 0.0, 0.0, 0.0, 0.0);
+    Capability cap1(SPHERE, 0.0, 0.0, 0.0, 10.0);
+    Capability cap2(SPHERE, 0.0, 0.0, 0.0, 20.0);
+    Capability cap3(SPHERE, 0.0, 0.0, 0.0, 30.0);
+    Capability cap4(SPHERE, 0.0, 0.0, 0.0, 40.0);
+    Capability cap5(SPHERE, 0.0, 0.0, 0.0, 50.0);
+    Capability cap6(SPHERE, 0.0, 0.0, 0.0, 60.0);
+    Capability cap7(SPHERE, 0.0, 0.0, 0.0, 70.0);
+    Capability cap8(SPHERE, 0.0, 0.0, 0.0, 80.0);
+    Capability cap9(SPHERE, 0.0, 0.0, 0.0, 90.0);
+    Capability cap10(SPHERE, 0.0, 0.0, 0.0, 100.0);
+
+    Capability cap0;
     Capability cap1(SPHERE, 0.0, 0.0, 0.0);
     Capability cap2(CONE, 0.0, 90.0, 10.0);
     Capability cap3(CONE, 90.0, 0.0, 45.0);
@@ -272,28 +328,31 @@ int main(int argc, char** argv )
     Capability cap10(CYLINDER_2, 0.0, 0.0, 45.0);
     Capability cap11(CYLINDER_2, 90.0, 90.0, 89.0);
 
-    tree.setNodeCapability(0.0, 0.0, 1.0, emptyCap);
-    tree.setNodeCapability(0.2, 0.0, 1.0, cap1);
-    tree.setNodeCapability(0.4, 0.0, 1.0, cap2);
-    tree.setNodeCapability(0.6, 0.0, 1.0, cap3);
-    tree.setNodeCapability(0.8, 0.0, 1.0, cap4);
-    tree.setNodeCapability(1.0, 0.0, 1.0, cap5);
-    tree.setNodeCapability(1.2, 0.0, 1.0, cap6);
-    tree.setNodeCapability(1.4, 0.0, 1.0, cap7);
-    tree.setNodeCapability(1.6, 0.0, 1.0, cap8);
-    tree.setNodeCapability(1.8, 0.0, 1.0, cap9);
-    tree.setNodeCapability(2.0, 0.0, 1.0, cap10);
-    tree.setNodeCapability(2.2, 0.0, 1.0, cap11);*/
-
+    testTree.setNodeCapability(0.0, 0.0, 1.0, cap0);
+    testTree.setNodeCapability(0.2, 0.0, 1.0, cap1);
+    testTree.setNodeCapability(0.4, 0.0, 1.0, cap2);
+    testTree.setNodeCapability(0.6, 0.0, 1.0, cap3);
+    testTree.setNodeCapability(0.8, 0.0, 1.0, cap4);
+    testTree.setNodeCapability(1.0, 0.0, 1.0, cap5);
+    testTree.setNodeCapability(1.2, 0.0, 1.0, cap6);
+    testTree.setNodeCapability(1.4, 0.0, 1.0, cap7);
+    testTree.setNodeCapability(1.6, 0.0, 1.0, cap8);
+    testTree.setNodeCapability(1.8, 0.0, 1.0, cap9);
+    testTree.setNodeCapability(2.0, 0.0, 1.0, cap10);
+    //testTree.setNodeCapability(2.2, 0.0, 1.0, cap11);
+*/
+    // remember the greatest extent in y-direction to properly set the color table outside of the capabilities
+    double maxY = 0.0;
 
     while (ros::ok())
     {
         unsigned int count = 0;
-        /*for(CapabilityOcTree::leaf_iterator it = tree.begin_leafs(), end = tree.end_leafs(); it != end; ++it)
+        visualization_msgs::MarkerArray markerArray;
+/*        for(CapabilityOcTree::leaf_iterator it = testTree.begin_leafs(), end = testTree.end_leafs(); it != end; ++it)
         {
             visualization_msgs::Marker marker;
 
-            marker.header.frame_id = "/l_shoulder_pan_link";
+            marker.header.frame_id = "/torso_lift_link";
             marker.header.stamp = ros::Time::now();
 
             marker.ns = "capability_shapes";
@@ -306,9 +365,9 @@ int main(int argc, char** argv )
             {
                 continue;
             }
-            // Publish the marker
-            marker_pub.publish(marker);
-
+            // push the marker into array
+            markerArray.markers.push_back(marker);
+/*
             // draw a cube around the capability marker to see the volume
             visualization_msgs::Marker cubeMarker;
 
@@ -337,10 +396,10 @@ int main(int argc, char** argv )
             cubeMarker.scale.z = it.getSize();
 
             // Publish the marker
-            marker_pub.publish(cubeMarker);
-        }*/
-        visualization_msgs::MarkerArray markerArray;
-        for (CapabilityOcTree::leaf_iterator it = visTree->begin_leafs(), end = visTree->end_leafs(); it != end; ++it)
+            marker_pub.publish(cubeMarker);*/
+        }
+        // loop through all capabilities
+        for (CapabilityOcTree::leaf_iterator it = tree->begin_leafs(), end = tree->end_leafs(); it != end; ++it)
         {
             // if not inside boundaries, skip actual capability
             double eps = 0.000001;
@@ -373,6 +432,18 @@ int main(int argc, char** argv )
             {
                 continue;
             }
+
+            if (showAreaColor)
+            {
+                // set color according to reachable surface
+                setMarkerColor(&marker, (1.0 - it->getCapability().getPercentReachable() / 100.0));
+            }
+            else
+            {
+                // set color according to shape fit error
+                setMarkerColor(&marker, it->getCapability().getShapeFitError() / 100.0);
+            }
+
             markerArray.markers.push_back(marker);
 
             if (it->getCapability().getType() == CONE && it->getCapability().getHalfOpeningAngle() > 90.0)
@@ -389,11 +460,61 @@ int main(int argc, char** argv )
                 marker.scale.y = it.getSize();
                 marker.scale.z = it.getSize();
                 
+                if (showAreaColor)
+                {
+                    // set color according to reachable surface
+                    setMarkerColor(&marker, (1.0 - it->getCapability().getPercentReachable() / 100.0));
+                }
+                else
+                {
+                    // set color according to shape fit error
+                    setMarkerColor(&marker, it->getCapability().getShapeFitError() / 100.0);
+                }
+
                 marker.color.a = 0.5;
                 
                 markerArray.markers.push_back(marker);
             }
+
+            // get maximal extent in y-direction
+            if (maxY < it.getY())
+            {
+                maxY = it.getY();
+            }
         }
+
+        if (showColorTable)
+        {
+            for (size_t i = 0; i < 21; ++i)
+            {
+                visualization_msgs::Marker marker;
+
+                marker.header.frame_id = frame;
+                marker.header.stamp = ros::Time(0);
+
+                marker.ns = "color_table";
+                marker.id = count++;
+
+                marker.action = visualization_msgs::Marker::ADD;
+                marker.lifetime = ros::Duration();
+                
+                marker.type = visualization_msgs::Marker::CUBE;
+
+                marker.pose.position.x = 0.05 * (double)i;
+                marker.pose.position.y = maxY + 0.5;
+                marker.pose.position.z = 0.0;
+
+                marker.scale.x = 0.05;
+                marker.scale.y = 0.05;
+                marker.scale.z = 0.05;
+
+                // set color according to reachable surface
+                setMarkerColor(&marker, 0.05 * (double)i);
+
+                markerArray.markers.push_back(marker);
+            }
+        }
+
         // Publish the marker
         marker_pub.publish(markerArray);
 
@@ -407,6 +528,6 @@ int main(int argc, char** argv )
             r.sleep();
         }
     }
-    delete visTree;
+    delete tree;
 }
 

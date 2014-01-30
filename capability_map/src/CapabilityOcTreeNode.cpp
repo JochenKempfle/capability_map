@@ -51,6 +51,44 @@ bool Capability::isDirectionPossible(double phi, double theta) const
     return retValue;
 }
 
+double Capability::getPercentReachable() const
+{
+    double retValue;
+
+    switch (_type)
+    {
+        case EMPTY:
+            // no direction possible
+            retValue = 0.0;
+            break;
+
+        case SPHERE:
+            // every direction possible
+            retValue = 100.0;
+            break;
+
+        case CONE:
+            // area of CONE is: 2 * PI * (1 - cos(halfOpeningAngle)). With sphere area = 4 * PI * r^2 it simplifies to:
+            retValue = 100.0 * (1.0 - cos(_halfOpeningAngle * M_PI / 180.0)) / 2.0;
+            break;
+
+        case CYLINDER_1:
+            // CYLINDER_1 can be seen as double cone, multiply above formula by 2:
+            retValue = 100.0 * (1.0 - cos(_halfOpeningAngle * M_PI / 180.0));
+            break;
+
+        case CYLINDER_2:
+            // area of CYLINDER_2 is: 2 * PI * r * h. h is: 2 * sin(halfOpeningAngle)
+            retValue = 100.0 * sin(_halfOpeningAngle * M_PI / 180.0);
+            break;
+
+        default:
+            retValue = 0.0;
+    }
+
+    return retValue;
+}
+
 CapabilityOcTreeNode::CapabilityOcTreeNode() : OcTreeDataNode<Capability>(Capability(EMPTY, 0.0, 0.0, 0.0, 0.0))
 {
 

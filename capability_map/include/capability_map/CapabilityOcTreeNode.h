@@ -28,7 +28,7 @@ enum CAPABILITY_TYPE
  *             x  x                    x.-"                                                                                 *
  *                                                                                                                          *
  *                                                                                                                          *
- * Direction of phi/theta:                                                                                                  *
+ * Direction of phi/theta axis:                                                                                             *
  *                                                                                                                 ,^.      *
  *             NONE                  phi/theta: -->                    phi/theta: -->                   phi/theta:  |       *
  *                                                                                                                  |       *
@@ -42,7 +42,7 @@ class Capability
 
     FRIEND_TEST(Capability, constructor);
 
-    Capability() : _type(EMPTY), _phi(0.0), _theta(0.0), _halfOpeningAngle(0.0), _shapeFitError(0.0) { }
+    Capability() : _type(EMPTY), _phi(0.0), _theta(0.0), _halfOpeningAngle(0.0), _shapeFitError(100.0) { }
     Capability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle, double shapeFitError = 0.0)
                : _type(type), _phi(phi), _theta(theta), _halfOpeningAngle(halfOpeningAngle), _shapeFitError(shapeFitError)
     {
@@ -80,6 +80,11 @@ class Capability
 
     // test if a specific direction is possible with this capability's configuration
     bool isDirectionPossible(double phi, double theta) const;
+
+    FRIEND_TEST(Capability, getPercentReachable);
+
+    // gets the percentage of the reachable surface area compared to a sphere
+    double getPercentReachable() const;
 
   protected:
 

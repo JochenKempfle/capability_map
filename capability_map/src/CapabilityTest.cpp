@@ -190,6 +190,37 @@ TEST(Capability, isDirectionPossible)
     ASSERT_FALSE(rotCylinder2Cap.isDirectionPossible(50.0, 10.0));
 }
 
+TEST(Capability, getPercentReachable)
+{
+    // test empty capability (expect 0.0%)
+    Capability emptyCap(EMPTY, 0.0, 0.0, 0.0);
+
+    ASSERT_DOUBLE_EQ(0.0, emptyCap.getPercentReachable());
+
+    // test sphere-like capability (expect 100.0%)
+    Capability sphereCap(SPHERE, 0.0, 0.0, 0.0);
+
+    ASSERT_DOUBLE_EQ(100.0, sphereCap.getPercentReachable());
+
+    // test cone-like capability
+    Capability coneCap(CONE, 10.0, 30.0, 90.0);
+    Capability coneCap2(CONE, 0.0, 90.0, 60.0);
+
+    ASSERT_DOUBLE_EQ(50.0, coneCap.getPercentReachable());
+    ASSERT_DOUBLE_EQ(25.0, coneCap2.getPercentReachable());
+
+    // test cylinder_1-like capability
+    Capability cylinder_1Cap(CYLINDER_1, 10.0, 30.0, 60.0);
+    //Capability cylinder_1Cap2(CYLINDER_1, 0.0, 90.0, 30.0);
+
+    ASSERT_DOUBLE_EQ(50.0, cylinder_1Cap.getPercentReachable());
+    //ASSERT_DOUBLE_EQ(25.0, cylinder_1Cap2.getPercentReachable());
+
+    // test cylinder_2-like capability
+    Capability cylinder_2Cap(CYLINDER_2, 10.0, 30.0, 30.0);
+
+    ASSERT_DOUBLE_EQ(50.0, cylinder_2Cap.getPercentReachable());
+}
 
 TEST(CapabilityOcTreeNode, constructor)
 {

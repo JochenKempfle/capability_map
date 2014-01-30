@@ -396,8 +396,8 @@ int main(int argc, char** argv )
             cubeMarker.scale.z = it.getSize();
 
             // Publish the marker
-            marker_pub.publish(cubeMarker);*/
-        }
+            marker_pub.publish(cubeMarker);
+        }*/
         // loop through all capabilities
         for (CapabilityOcTree::leaf_iterator it = tree->begin_leafs(), end = tree->end_leafs(); it != end; ++it)
         {

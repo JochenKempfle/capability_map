@@ -10,6 +10,8 @@
   <url>http://ros.org/wiki/capability_eval</url>
   <depend package="roscpp"/>
   <depend package="capability_map"/>
+  <depend package="capability_map_generator"/>
+  <depend package="pluginlib"/>
 
 </package>
 

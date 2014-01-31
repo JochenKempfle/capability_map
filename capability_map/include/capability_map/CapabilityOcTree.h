@@ -54,6 +54,10 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
 
     // test if a certain 5 DOF pose is possible
     bool isPosePossible(const double &x, const double &y, const double &z, const double &phi, const double &theta) const;
+    bool isPosePossible(const octomap::pose6d pose) const;
+
+    // returns all positions which have at least X percent reachable directions
+    std::vector<octomath::Vector3> getPositionsWithMinReachablePercent(double percent);
 
     void setBaseName(const std::string &name) { _baseName = name; }
     std::string getBaseName() const { return _baseName; }

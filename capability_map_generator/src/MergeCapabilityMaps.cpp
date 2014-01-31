@@ -93,8 +93,11 @@ int main(int argc, char** argv)
             else if (trees[0]->getNodeCapability(it.getX(), it.getY(), it.getZ()).getShapeFitError() >
                      trees[i]->getNodeCapability(it.getX(), it.getY(), it.getZ()).getShapeFitError())
             {
-                trees[0]->setNodeCapability(it.getX(), it.getY(), it.getZ(),
-                          trees[0]->getNodeCapability(it.getX(), it.getY(), it.getZ()));
+                if (trees[i]->getNodeCapability(it.getX(), it.getY(), it.getZ()).getType() != EMPTY)
+                {
+                    trees[0]->setNodeCapability(it.getX(), it.getY(), it.getZ(),
+                              trees[i]->getNodeCapability(it.getX(), it.getY(), it.getZ()));
+                }
             }
         }
     }

@@ -127,6 +127,31 @@ bool CapabilityOcTree::isPosePossible(const double &x, const double &y, const do
     return search(x, y, z)->getCapability().isDirectionPossible(phi, theta);
 }
 
+bool CapabilityOcTree::isPosePossible(const octomap::pose6d pose) const
+{
+    octomath::Vector3 rotatedVector = pose.rot().rotate(octomath::Vector3(1.0, 0.0, 0.0));
+    double phi = atan2(rotatedVector.y(), rotatedVector.x()) * 180.0 / M_PI;
+    double theta = acos(rotatedVector.z()) * 180.0 / M_PI;
+
+    return search(pose.x(), pose.y(), pose.z())->getCapability().isDirectionPossible(phi, theta);
+}
+
+std::vector<octomath::Vector3> CapabilityOcTree::getPositionsWithMinReachablePercent(double percent)
+{
+    std::vector<octomath::Vector3> positions;
+
+    // loop through all capabilities
+    for (CapabilityOcTree::leaf_iterator it = this->begin_leafs(), end = this->end_leafs(); it != end; ++it)
+    {
+        if (it->getCapability().getPercentReachable() < percent)
+        {
+            continue;
+        }
+        positions.push_back(octomath::Vector3(it.getX(), it.getY(), it.getZ()));
+    }
+    return positions;
+}
+
 CapabilityOcTreeNode* CapabilityOcTree::setNodeCapabilityRecurs(CapabilityOcTreeNode* node, bool node_just_created,
                                                     const OcTreeKey& key, unsigned int depth, const Capability &capability)
 {

@@ -82,7 +82,7 @@ Capability ReachabilitySphere::convertToCapability()
         double phi = atan2(_reachableDirections[0].y, _reachableDirections[0].x) * 180.0 / M_PI;
         double theta = acos(_reachableDirections[0].z) * 180.0 / M_PI;
         // TODO: choose a good half opening angle in case there is just one direction reachable
-        return Capability(CONE, phi, theta, 0.5);
+        return Capability(CONE, phi, theta, 0.5, 0.0);
     }
 
     // TODO: current directions is only useful when filtering dataset later
@@ -115,8 +115,8 @@ Capability ReachabilitySphere::convertToCapability()
 
     Capability retCapability;
 
-    // select the shape type with smallest shapeFitError and create a capability
-    if (conePair.second < cylinder_1Pair.second && conePair.second < cylinder_2Pair.second)
+    // select the shape type with smallest shapeFitError and create a capability (with equal SFE prefer cone)
+    if (conePair.second <= cylinder_1Pair.second && conePair.second <= cylinder_2Pair.second)
     {
         // cone gets chosen
         double phi = atan2(eigenVectors[0].y, eigenVectors[0].x) * 180.0 / M_PI;
@@ -386,6 +386,13 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_1(const Vector &axis) 
         }
     }
 
+    // In the case there are just one or two unreachable directions not covered, a cylinder_1 type is not a good decision.
+    // It is possible that they lie on an orthodrome which doesn't cover any other point. A cone or a sphere would be more accurate
+    if (numUnreachableDirections - unreachableCovered < 3)
+    {
+        bestShapeFitError = 1.0;
+    }
+
     bestShapeFitError *= 100.0;
     if (bestShapeFitError > 100.0)
     {
@@ -469,8 +476,9 @@ std::pair<double, double> ReachabilitySphere::fitCylinder_2(const Vector &axis) 
         }
     }
 
-    // in the case there is just one direction covered, a cylinder_2 type is not a good decision
-    if (numReachableDirections - reachableMissed < 2)
+    // In the case there are just one or two reachable directions covered, a cylinder_2 type is not a good decision.
+    // It is possible that they lie on an orthodrome which doesn't cover any other point.
+    if (numReachableDirections - reachableMissed < 3)
     {
         bestShapeFitError = 1.0;
     }

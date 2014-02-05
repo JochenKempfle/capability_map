@@ -59,6 +59,9 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
     // returns all positions which have at least X percent reachable directions
     std::vector<octomath::Vector3> getPositionsWithMinReachablePercent(double percent);
 
+    void setGroupName(const std::string &name) { _groupName = name; }
+    std::string getGroupName() const { return _groupName; }
+
     void setBaseName(const std::string &name) { _baseName = name; }
     std::string getBaseName() const { return _baseName; }
 
@@ -88,6 +91,7 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
 
   private:
 
+    std::string _groupName;
     std::string _baseName;
     std::string _tipName;
 };

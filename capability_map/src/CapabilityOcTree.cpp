@@ -21,13 +21,19 @@ CapabilityOcTree* CapabilityOcTree::readFile(const std::string &filename)
     }
 
     std::string qualifier;
+    std::string groupName;
     std::string baseName;
     std::string tipName;
 
     while(!file.eof())
     {
         file >> qualifier;
-        if (qualifier == "base_name")
+        if (qualifier == "group_name")
+        {
+            file.ignore(1, ' ');
+            std::getline(file, groupName);
+        }
+        else if (qualifier == "base_name")
         {
             file.ignore(1, ' ');
             std::getline(file, baseName);
@@ -43,6 +49,7 @@ CapabilityOcTree* CapabilityOcTree::readFile(const std::string &filename)
 
     CapabilityOcTree* tree = dynamic_cast<CapabilityOcTree*>(abstractTree);
 
+    tree->setGroupName(groupName);
     tree->setBaseName(baseName);
     tree->setTipName(tipName);
 
@@ -66,7 +73,9 @@ bool CapabilityOcTree::writeFile(const std::string &filename)
             OCTOMAP_ERROR_STR("Could not write to " << filename);
             return false;
         }
-        file << std::endl << "base_name " << _baseName << std::endl << "tip_name " << _tipName << std::endl;
+        file << std::endl << "group_name " << _groupName << std::endl;
+        file << "base_name " << _baseName << std::endl;
+        file << "tip_name " << _tipName << std::endl;
         file.close();
     }
     return true;

@@ -228,6 +228,13 @@ int main(int argc, char** argv)
     // create a CapabilityOcTree with resolution given by argument
     CapabilityOcTree tree(resolution);
 
+    std::string group_name;
+    if(!nhPriv.getParam("group_name", group_name))
+    {
+        ROS_ERROR("No group_name defined!");
+        ros::shutdown();
+        exit(1);
+    }
     std::string base_name;
     if(!nhPriv.getParam("base_name", base_name))
     {
@@ -243,6 +250,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
+    tree.setGroupName(group_name);
     tree.setBaseName(base_name);
     tree.setTipName(tip_name);
 

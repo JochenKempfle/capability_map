@@ -259,6 +259,7 @@ int main(int argc, char** argv )
 
     std::string frame = tree->getBaseName();
 
+    ROS_INFO("Group name is: %s.", tree->getGroupName().c_str());
     ROS_INFO("Base frame is: %s.", frame.c_str());
     ROS_INFO("Tip frame is: %s.", tree->getTipName().c_str());
     ROS_INFO("Resolution is: %g\n", tree->getResolution());

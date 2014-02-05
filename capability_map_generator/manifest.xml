@@ -18,6 +18,9 @@
 
   <export>
       <capability_map_generator plugin="${prefix}/reachability_dummy_plugins.xml" />
+      <!--cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -l"/-->
+      <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib"/>
+
   </export>
 
 </package>

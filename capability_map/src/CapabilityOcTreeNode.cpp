@@ -115,7 +115,7 @@ bool CapabilityOcTreeNode::createChild(unsigned int i)
     return true;
 }
 
-/*
+
 std::ostream& CapabilityOcTreeNode::writeValue(std::ostream &s) const
 {
     // 1 bit for each children; 0: empty, 1: allocated
@@ -133,9 +133,19 @@ std::ostream& CapabilityOcTreeNode::writeValue(std::ostream &s) const
     }
     char children_char = (char)children.to_ulong();
 
+    // buffer capabilities data
+    unsigned char type = value.getType();
+    double phi = value.getPhi();
+    double theta = value.getTheta();
+    double halfOpeningAngle = value.getHalfOpeningAngle();
+    double SFE = value.getShapeFitError();
+
     // write node data
-    s.write((const char*)&value, sizeof(value)); // occupancy
-    s.write((const char*)&_capability, sizeof(Capability)); // capability
+    s.write((const char*)&type, sizeof(char));
+    s.write((const char*)&phi, sizeof(double));
+    s.write((const char*)&theta, sizeof(double));
+    s.write((const char*)&halfOpeningAngle, sizeof(double));
+    s.write((const char*)&SFE, sizeof(double));
     s.write((char*)&children_char, sizeof(char)); // child existence
 
     // write existing children
@@ -149,13 +159,30 @@ std::ostream& CapabilityOcTreeNode::writeValue(std::ostream &s) const
     return s;
 }
 
+
 std::istream& CapabilityOcTreeNode::readValue(std::istream &s)
 {
+    // buffer for capabilities' data
+    unsigned char type;
+    double phi;
+    double theta;
+    double halfOpeningAngle;
+    double SFE;
+
     // read node data
     char children_char;
-    s.read((char*)&value, sizeof(value)); // occupancy
-    s.read((char*)&_capability, sizeof(Capability)); // capability
+    s.read((char*)&type, sizeof(char));
+    s.read((char*)&phi, sizeof(double));
+    s.read((char*)&theta, sizeof(double));
+    s.read((char*)&halfOpeningAngle, sizeof(double));
+    s.read((char*)&SFE, sizeof(double));
     s.read((char*)&children_char, sizeof(char)); // child existence
+
+    // insert buffered data into node
+    value.setType(type);
+    value.setDirection(phi, theta);
+    value.setHalfOpeningAngle(halfOpeningAngle);
+    value.setShapeFitError(SFE);
 
     // read existing children
     std::bitset<8> children ((unsigned long long)children_char);
@@ -169,5 +196,5 @@ std::istream& CapabilityOcTreeNode::readValue(std::istream &s)
     }
     return s;
 }
-*/
+
 

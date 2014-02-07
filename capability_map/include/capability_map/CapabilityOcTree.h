@@ -26,11 +26,11 @@ class CapabilityOcTree : public OcTreeBase<CapabilityOcTreeNode>
 
     std::string getTreeType() const { return "CapabilityOcTree"; }
 
-    // creates a new CapabilityOcTree from given file (you need to delete the created tree yourself)
-    static CapabilityOcTree* readFile(const std::string &filename);
-
     // writes the CapabilityOcTree to file
     bool writeFile(const std::string &filename);
+
+    // creates a new CapabilityOcTree from given file (you need to delete the created tree yourself)
+    static CapabilityOcTree* readFile(const std::string &filename);
 
     // returns the position at which the given coordinate ends up in the tree
     inline double getAlignment(double coordinate) { return keyToCoord(coordToKey(coordinate)); }

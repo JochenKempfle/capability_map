@@ -9,11 +9,11 @@ TEST(Capability, constructor)
     // check if constructors do their job
     Capability cap1;
 
-    ASSERT_TRUE(EMPTY == cap1._type);
-    ASSERT_TRUE(0.0 == cap1._phi);
-    ASSERT_TRUE(0.0 == cap1._theta);
-    ASSERT_TRUE(0.0 == cap1._halfOpeningAngle);
-    ASSERT_TRUE(0 == cap1._shapeFitError);
+    ASSERT_EQ(EMPTY, cap1._type);
+    ASSERT_EQ(0.0, cap1._phi);
+    ASSERT_EQ(0.0, cap1._theta);
+    ASSERT_EQ(0.0, cap1._halfOpeningAngle);
+    ASSERT_EQ(0.0, cap1._shapeFitError);
 
     Capability cap2(SPHERE, 0.1, 0.2, 0.3, 2.0);
 
@@ -356,6 +356,7 @@ TEST(CapabilityOcTree, read_writeBinary)
     tree.setNodeCapability(2.0, 1.0, 1.0, CYLINDER_1, 20.0, 20.0, 10.0);
     tree.setNodeCapability(2.0, 2.0, 1.0, CYLINDER_2, 20.0, 20.0, 10.0);
 
+    tree.setGroupName("group");
     tree.setBaseName("base");
     tree.setTipName("tip");
 
@@ -371,12 +372,14 @@ TEST(CapabilityOcTree, read_writeBinary)
     ASSERT_TRUE(tree.getNodeCapability(2.0, 1.0, 1.0) == tree2->getNodeCapability(2.0, 1.0, 1.0));
     ASSERT_TRUE(tree.getNodeCapability(2.0, 2.0, 1.0) == tree2->getNodeCapability(2.0, 2.0, 1.0));
 
+    ASSERT_EQ(tree.getGroupName(), tree2->getGroupName());
     ASSERT_EQ(tree.getBaseName(), tree2->getBaseName());
     ASSERT_EQ(tree.getTipName(), tree2->getTipName());
 
     delete tree2;
 
-    // test if empty or whitespaced base and tip names are written and read
+    // test if empty, whitespaced or weird group, base and tip names are written and read
+    tree.setGroupName(" /~#_*+:|<> ");
     tree.setBaseName(" ");
     tree.setTipName("");
 
@@ -386,6 +389,7 @@ TEST(CapabilityOcTree, read_writeBinary)
 
     remove("./test_tree.cpm");
 
+    ASSERT_EQ(tree.getGroupName(), tree2->getGroupName());
     ASSERT_EQ(tree.getBaseName(), tree2->getBaseName());
     ASSERT_EQ(tree.getTipName(), tree2->getTipName());
 

@@ -2,6 +2,31 @@
 #include "capability_map/CapabilityOcTreeNode.h"
 
 
+bool CapabilityOcTree::writeFile(const std::string &filename)
+{
+    std::ofstream file(filename.c_str(), std::ios_base::out | std::ios_base::binary);
+
+    if (!file.is_open())
+    {
+        OCTOMAP_ERROR_STR("Filestream to " << filename << " not open, nothing written.");
+        return false;
+    }
+    else
+    {
+        if (!write(file))
+        {
+            file.close();
+            OCTOMAP_ERROR_STR("Could not write to " << filename);
+            return false;
+        }
+        file << std::endl << "group_name " << _groupName << std::endl;
+        file << "base_name " << _baseName << std::endl;
+        file << "tip_name " << _tipName << std::endl;
+        file.close();
+    }
+    return true;
+}
+
 CapabilityOcTree* CapabilityOcTree::readFile(const std::string &filename)
 {
     std::ifstream file(filename.c_str(), std::ios_base::in |std::ios_base::binary);
@@ -54,31 +79,6 @@ CapabilityOcTree* CapabilityOcTree::readFile(const std::string &filename)
     tree->setTipName(tipName);
 
     return tree;
-}
-
-bool CapabilityOcTree::writeFile(const std::string &filename)
-{
-    std::ofstream file(filename.c_str(), std::ios_base::out | std::ios_base::binary);
-
-    if (!file.is_open())
-    {
-        OCTOMAP_ERROR_STR("Filestream to " << filename << " not open, nothing written.");
-        return false;
-    }
-    else
-    {
-        if (!write(file))
-        {
-            file.close();
-            OCTOMAP_ERROR_STR("Could not write to " << filename);
-            return false;
-        }
-        file << std::endl << "group_name " << _groupName << std::endl;
-        file << "base_name " << _baseName << std::endl;
-        file << "tip_name " << _tipName << std::endl;
-        file.close();
-    }
-    return true;
 }
 
 CapabilityOcTreeNode* CapabilityOcTree::setNodeCapability(const OcTreeKey &key, const Capability &capability)

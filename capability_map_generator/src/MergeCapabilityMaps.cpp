@@ -62,6 +62,12 @@ int main(int argc, char** argv)
                     in file %s has resolution %g\n", inputNames[0].c_str(),
                     trees[0]->getResolution(), inputNames[i].c_str(), trees[i]->getResolution());
             exit(1);
+        }else if (trees[0]->getGroupName() != trees[i]->getGroupName())
+        {
+            printf("Error: Capability map in file %s has group_name %s, capability map \
+                    in file %s has group_name %s\n", inputNames[0].c_str(), trees[0]->getGroupName().c_str(),
+                    inputNames[i].c_str(), trees[i]->getGroupName().c_str());
+            exit(1);
         }
         else if (trees[0]->getBaseName() != trees[i]->getBaseName())
         {

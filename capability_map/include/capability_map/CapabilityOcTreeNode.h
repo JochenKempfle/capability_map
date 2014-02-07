@@ -42,7 +42,7 @@ class Capability
 
     FRIEND_TEST(Capability, constructor);
 
-    Capability() : _type(EMPTY), _phi(0.0), _theta(0.0), _halfOpeningAngle(0.0), _shapeFitError(100.0) { }
+    Capability() : _type(EMPTY), _phi(0.0), _theta(0.0), _halfOpeningAngle(0.0), _shapeFitError(0.0) { }
     Capability(CAPABILITY_TYPE type, double phi, double theta, double halfOpeningAngle, double shapeFitError = 0.0)
                : _type(type), _phi(phi), _theta(theta), _halfOpeningAngle(halfOpeningAngle), _shapeFitError(shapeFitError)
     {
@@ -50,8 +50,8 @@ class Capability
     }
 
     // setter and getter
-    void setType(CAPABILITY_TYPE type) { _type = type; }
-    CAPABILITY_TYPE getType() const { return _type; }
+    void setType(unsigned char type) { _type = type; }
+    unsigned char getType() const { return _type; }
 
     void setDirection(double phi, double theta) { _phi = phi; _theta = theta; }
     double getPhi() const { return _phi; }
@@ -60,8 +60,8 @@ class Capability
     void setHalfOpeningAngle(double halfOpeningAngle) { _halfOpeningAngle = halfOpeningAngle; }
     double getHalfOpeningAngle() const { return _halfOpeningAngle; }
 
-    void setShapeFitError(char shapeFitError) { _shapeFitError = shapeFitError; }
-    double getShapeFitError() { return _shapeFitError; }
+    void setShapeFitError(double shapeFitError) { _shapeFitError = shapeFitError; }
+    double getShapeFitError() const { return _shapeFitError; }
 
     FRIEND_TEST(Capability, equalityOperators);
 
@@ -88,7 +88,7 @@ class Capability
 
   protected:
 
-    CAPABILITY_TYPE _type;
+    unsigned char _type;
 
     // the direction of the capability shape in sphere coordinates
     double _phi, _theta;
@@ -162,9 +162,9 @@ class CapabilityOcTreeNode : public OcTreeDataNode<Capability>
     }
     */
 
-    // file I/O (derived by base class), uncomment/implement if specific file I/O is needed
-    // std::istream& readValue (std::istream &s);
-    // std::ostream& writeValue(std::ostream &s) const;
+    // file I/O
+    std::ostream& writeValue(std::ostream &s) const;
+    std::istream& readValue(std::istream &s);
 
 };
 

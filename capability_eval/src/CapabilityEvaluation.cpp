@@ -1,10 +1,14 @@
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
 #include <tclap/CmdLine.h>
+#include <sstream>
 #include <cstdio>
+#include <ostream>
+#include <fstream>
 #include <cstdlib>
 #include <vector>
 #include <string>
+#include <utility>
 #include "capability_map_generator/ReachabilityInterface.h"
 #include "capability_map/CapabilityOcTree.h"
 
@@ -76,7 +80,11 @@ int main(int argc, char** argv)
     msg = "Sets another seed. Default is 1.";
     TCLAP::ValueArg<unsigned int> seedArg("s", "seed", msg, false, 1, "integer");
 
+    msg = "If set, writes a log file containing time required and number of computed capabilities to map_name.cpm.eval_log";
+    TCLAP::SwitchArg logArg("l", "log", msg, false);
+
     cmd.add(seedArg);
+    cmd.add(logArg);
     cmd.add(numSamplesArg);
     cmd.add(pathNameArg);
 
@@ -93,6 +101,7 @@ int main(int argc, char** argv)
     }
 
     const size_t numSamples = numSamplesArg.getValue();
+    bool loggingEnabled = logArg.getValue();
 
     // load the capability map
     std::string pathName = pathNameArg.getValue();
@@ -100,7 +109,7 @@ int main(int argc, char** argv)
 
     if (tree == NULL)
     {
-        printf("could not read file %s, check if you used an absolute path to the file, roslaunch usually changes the working directory\n", pathName.c_str());
+        printf("Could not read file %s, check if you used an absolute path to the file, roslaunch usually changes the working directory\n", pathName.c_str());
         ros::shutdown();
         exit(1);
     }
@@ -112,21 +121,28 @@ int main(int argc, char** argv)
 
     std::vector<bool> nativePossibilities(numSamples), capabilityPossibilities(numSamples);
 
-    printf("Generating %d random poses. Bounding box is (-1, -1, -1) to (1, 1, 1)\n", numSamples);
+    printf("Generating %d random poses lying in the workspace of the robot.\n", numSamples);
 
+    // generate random poses
     for (size_t i = 0; i < numSamples; ++i)
     {
-        double a = double(rand() % 2001) / 1000.0 - 1.0;
-        double b = double(rand() % 2001) / 1000.0 - 1.0;
-        double c = double(rand() % 2001) / 1000.0 - 1.0;
         double x = double(rand() % 2001) / 1000.0 - 1.0;
         double y = double(rand() % 2001) / 1000.0 - 1.0;
         double z = double(rand() % 2001) / 1000.0 - 1.0;
+        // if the capability at given position is empty search a new one
+        if (tree->getNodeCapability(x, y, z).getType() == EMPTY)
+        {
+            --i;
+            continue;
+        }
+        double a = double(rand() % 2001) / 1000.0 - 1.0;
+        double b = double(rand() % 2001) / 1000.0 - 1.0;
+        double c = double(rand() % 2001) / 1000.0 - 1.0;
 
         poses[i] = octomap::pose6d(octomath::Vector3(x, y, z), vectorToQuaternion(octomath::Vector3(a, b, c)));
     }
 
-    printf("done\nStarting evaluation of trying to reach poses the native way\n");
+    printf("done\nStart evaluation of trying to reach poses the native way\n");
 
     // try to reach 10000 random poses, count the time
 
@@ -144,7 +160,7 @@ int main(int argc, char** argv)
     }
     ros::Time endTimeNative = ros::Time::now();
 
-    printf("done\nStarting evaluation of trying to reach poses with capability map\n");
+    printf("done\nStart evaluation of trying to reach poses with capability map\n");
 
     ros::Time startTimeCapability = ros::Time::now();
     for (size_t i = 0; i < numSamples; ++i)
@@ -162,25 +178,33 @@ int main(int argc, char** argv)
 
     printf("done\n\n");
 
-    unsigned int numSuccessful = 0;
-    unsigned int numWrongPositives = 0;
-    unsigned int numWrongNegatives = 0;
+    unsigned int numTruePositives = 0;
+    unsigned int numTrueNegatives = 0;
+    unsigned int numFalsePositives = 0;
+    unsigned int numFalseNegatives = 0;
 
     for (size_t i = 0; i < numSamples; ++i)
     {
         if (capabilityPossibilities[i] == nativePossibilities[i])
         {
-            numSuccessful++;
+            if (capabilityPossibilities[i] == true)
+            {
+                numTruePositives++;
+            }
+            else
+            {
+                numTrueNegatives++;
+            }
         }
         else
         {
             if (capabilityPossibilities[i] == true)
             {
-                numWrongPositives++;
+                numFalsePositives++;
             }
             else
             {
-                numWrongNegatives++;
+                numFalseNegatives++;
             }
         }
     }
@@ -196,29 +220,95 @@ int main(int argc, char** argv)
         }
     }
 
+    // get time used by native
     int secsNative = int((endTimeNative - startTimeNative).toSec());
     int minsNative = secsNative / 60;
     int mSecsNative = int((endTimeNative - startTimeNative).toSec() * 1000.0) % 1000;
     secsNative %= 60;
-    printf("Time passed for native: %d min %d sec %d msec\n", minsNative, secsNative, mSecsNative);
 
+    // get time used by capability map
     int secsCapability = int((endTimeCapability - startTimeCapability).toSec());
     int minsCapability = secsCapability / 60;
     int mSecsCapability = int((endTimeCapability - startTimeCapability).toSec() * 1000.0) % 1000;
     int mySecsCapability = int((endTimeCapability - startTimeCapability).toSec() * 1000000.0) % 1000;
     secsCapability %= 60;
-    printf("Time passed for capabilities: %d min %d sec %d msec %d mysec\n\n", minsCapability,
-                                          secsCapability, mSecsCapability, mySecsCapability);
 
-    printf("Resolution of capability map is: %g\n", tree->getResolution());
-    printf("Number of not empty capabilities: %d\n", numNotEmptyCaps);
-    printf("Number of samples: %d\nNumber of correct estimated poses: %d\n", numSamples, numSuccessful);
-    printf("Number of not correct estimated poses: %d\n", numWrongPositives + numWrongNegatives);
-    printf("Number of wrong positives: %d\nNumber of wrong negatives: %d\n", numWrongPositives, numWrongNegatives);
-    printf("Correctness of capability map in percent: %3.2f\n\n", 100.0 * double(numSuccessful) / double(numSamples));
+    std::vector<std::pair<size_t, ros::Duration> > numAndTimeMinReachPercent;
 
-    printf("Memory usage of a single node in bytes: %d\n", tree->memoryUsageNode());
-    printf("Main memory usage of the complete map in bytes: %d\n", tree->memoryUsage());
+    // count time and num of positions for getPositionsWithMinReachablePercent()
+    for (int i = 0; i < 101; i += 5)
+    {
+        ros::Time start = ros::Time::now();
+        size_t num = tree->getPositionsWithMinReachablePercent(double(i)).size();
+        ros::Time end = ros::Time::now();
+        numAndTimeMinReachPercent.push_back(std::make_pair(num, end - start));
+    }
+
+    // output to screen/log file
+    std::ostringstream log;
+
+    log << "Resolution of capability map is: " << tree->getResolution() << std::endl;
+    log << "Group name is: " << tree->getGroupName() << std::endl;
+    log << "Base name is: " << tree->getBaseName() << std::endl;
+    log << "Tip name is: " << tree->getTipName() << std::endl << std::endl;
+
+    log << "Number of not empty capabilities: " << numNotEmptyCaps << std::endl << std::endl;
+
+    log << "Time passed for native: " << minsNative << " min " << secsNative << " sec " << mSecsNative << " msec" << std::endl;
+    log << "Time passed for capability: " << minsCapability << " min " << secsCapability << " sec ";
+    log << mSecsCapability << " msec " << mySecsCapability << " mysec" << std::endl << std::endl;
+
+    log << "Number of samples: " << numSamples << std::endl;
+    log << "Number of correct estimated poses: " << (numTruePositives + numTrueNegatives) << std::endl;
+    log << "Number of not correct estimated poses: " << (numFalsePositives + numFalseNegatives) << std::endl;
+    log << "Correctness of capability map: ";
+    log << (100.0 * double(numTruePositives + numTrueNegatives) / double(numSamples)) << "%" << std::endl << std::endl;
+
+    log << "Number of true positives: " << numTruePositives;
+    log << " (relative: " << 100.0 * double(numTruePositives) / double(numTruePositives + numFalsePositives);
+    log << "%, total: " << 100.0 * double(numTruePositives) / double(numSamples) << "%)" << std::endl;
+    log << "Number of true negatives: " << numTrueNegatives;
+    log << " (relative: " << 100.0 * double(numTrueNegatives) / double(numTrueNegatives + numFalseNegatives);
+    log << "%, total: " << 100.0 * double(numTrueNegatives) / double(numSamples) << "%)" << std::endl;
+    log << "Number of false positives: " << numFalsePositives;
+    log << " (relative: " << 100.0 * double(numFalsePositives) / double(numTruePositives + numFalsePositives);
+    log << "%, total: " << 100.0 * double(numFalsePositives) / double(numSamples) << "%)" << std::endl;
+    log << "Number of false negatives: " << numFalseNegatives;
+    log << " (relative: " << 100.0 * double(numFalseNegatives) / double(numTrueNegatives + numFalseNegatives);
+    log << "%, total: " << 100.0 * double(numFalseNegatives) / double(numSamples) << "%)" << std::endl;
+    log << std::endl;
+
+    log << "Evaluation of getPositionsWithMinReachablePercent():" << std::endl;
+    for (size_t i = 0; i < numAndTimeMinReachPercent.size(); ++i)
+    {
+        log << "Min percent reachable: " << i * 100.0 / (numAndTimeMinReachPercent.size() - 1);
+        log << "% Count: " << numAndTimeMinReachPercent[i].first;
+        int secs = int(numAndTimeMinReachPercent[i].second.toSec()) % 60;
+        int mSecs = int(numAndTimeMinReachPercent[i].second.toSec() * 1000.0) % 1000;
+        int mySecs = int(numAndTimeMinReachPercent[i].second.toSec() * 1000000.0) % 1000;
+        log << " Time: " << secs << "sec " << mSecs << " msec " << mySecs << " mysec" << std::endl;
+    }
+    log << std::endl;
+
+    log << "Memory usage of a single node in bytes: " << tree->memoryUsageNode() << std::endl;
+    log << "Main memory usage of the complete map in bytes: " << tree->memoryUsage() << std::endl;
+
+    std::cout << log.str() << std::endl;
+
+    if (loggingEnabled)
+    {
+        std::string pathNameLog = pathName + ".eval_log";
+        std::ofstream file(pathNameLog.c_str());
+        if (file.is_open())
+        {
+            file << log.str();
+            std::cout << "Written log file to " << pathNameLog << std::endl;
+        }
+        else
+        {
+            std::cout << "Error: Could not open " << pathNameLog << ", no log file written." << std::endl;
+        }
+    }
 }
 
 

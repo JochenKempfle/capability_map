@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <sstream>
+#include <fstream>
+#include <ostream>
 
 
 static pluginlib::ClassLoader<capability_map_generator::ReachabilityInterface>* s_ReachbilityInterface = NULL;
@@ -146,13 +149,13 @@ int main(int argc, char** argv)
            Example: -z -0.1 -z 2.3";
     TCLAP::MultiArg<double> zArg("z", "z-pos", msg, true, "floating point");
 
-    // msg = "If set, writes a log file containing time required and number of computed capabilities to map_name.cpm.log";
-    // TCLAP::SwitchArg logArg("l", "log", msg, false);
+    msg = "If set, writes a log file containing time required and number of computed capabilities to map_name.cpm.build_log";
+    TCLAP::SwitchArg logArg("l", "log", msg, false);
 
     cmd.add(zArg);
     cmd.add(yArg);
     cmd.add(xArg);
-    // cmd.add(logArg);
+    cmd.add(logArg);
     cmd.add(resolutionArg);
     cmd.add(numSamplesArg);
     cmd.add(pathNameArg);
@@ -173,7 +176,7 @@ int main(int argc, char** argv)
     int numSamples = numSamplesArg.getValue();
     double resolution = resolutionArg.getValue();
     std::string pathName = pathNameArg.getValue();
-    // bool loggingEnabled = logArg.getValue();
+    bool loggingEnabled = logArg.getValue();
 
 
     if (pathName.find_first_of('/') != 0)
@@ -371,19 +374,22 @@ int main(int argc, char** argv)
 
     ros::Time endTime = ros::Time::now();
 
+    std::ostringstream log;
+
     if (aborted)
     {
-        printf("Aborted at x: %g, y: %g, z: %g\n", abortPosX, abortPosY, abortPosZ);
+        pathName += ".part";
+        log << "Aborted at x: " << abortPosX << ", y: " << abortPosY << ", z: " << abortPosZ << std::endl;
         unsigned int numCapsComputed = ((abortPosX - startX) / resolution + 1.0) * ((endY - startY) / resolution + 1.0)
                                  * ((endZ - startZ) / resolution + 1.0) - ((abortPosY - startY) / resolution + 1.0)
                                  * ((abortPosZ - startZ) / resolution + 1.0) - ((abortPosZ - startZ) / resolution + 1.0);
-        printf("Successfully computed %d of %d capabilities, %d capabilities are left.\n", numCapsComputed, (unsigned int)numCapsToCompute,
-                                                                                           (unsigned int)numCapsToCompute - numCapsComputed);
+        log << "Successfully computed " << numCapsComputed << " of " << numCapsToCompute << " capabilities, ";
+        log << (unsigned int)numCapsToCompute - numCapsComputed << " capabilities are left." << std::endl;
     }
     else
     {
         printf("done              \n");
-        printf("Successfully computed %d capabilities.\n", (unsigned int)numCapsToCompute);
+        log << "Successfully computed " << numCapsToCompute << " capabilities." << std::endl;
     }
 
     int secs = int((endTime - startTime).toSec());
@@ -391,7 +397,7 @@ int main(int argc, char** argv)
     secs %= 3600;
     int mins = secs / 60;
     secs %= 60;
-    printf("Time passed: %d h %d min %d sec\n", hours, mins, secs);
+    log << "Time passed: " << hours << " h " << mins << " min " << secs << " sec" << std::endl << std::endl;
 
     if (!tree.writeFile(pathName))
     {
@@ -404,28 +410,54 @@ int main(int argc, char** argv)
         ROS_INFO("Capability map written to file %s", pathName.c_str());
     }
 
+    log << "Resolution is: " << resolution << std::endl;
+    log << "Group name is: " << group_name << std::endl;
+    log << "Base name is: " << base_name << std::endl;
+    log << "Tip name is: " << tip_name << std::endl << std::endl;
+
     if (aborted)
     {
-        printf("\nThe already computed part of the capability map doesn't need to be recalculated.");
-        printf("Simply restart the program with following arguments:\n");
+        log << std::endl;
+        log << "The already computed part of the capability map doesn't need to be recalculated." << std::endl;
+        log << "Simply restart the program with following arguments:" << std::endl;
         if (abortPosX != endX)
         {
-            printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
-                                      numSamples, resolution, abortPosX, endX, startY, endY, startZ, endZ);
+            log << "-p " << (pathName + "_2") << " -n " << numSamples << " -r " << resolution;
+            log << " -x " <<  abortPosX << " -x " << endX << " -y " << startY << " -y " <<  endY;
+            log << " -z " << startZ << " -z " << endZ << std::endl << std::endl;
         }
         else if (abortPosY != endY)
         {
-            printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
-                                      numSamples, resolution, abortPosX, endX, abortPosY, endY, startZ, endZ);
+            log << "-p " << (pathName + "_2") << " -n " << numSamples << " -r " << resolution;
+            log << " -x " <<  abortPosX << " -x " << endX << " -y " << abortPosY << " -y " <<  endY;
+            log << " -z " << startZ << " -z " << endZ << std::endl << std::endl;
         }
         else
         {
-            printf("-p %s -n %d -r %g -x %g -x %g -y %g -y %g -z %g -z %g\n\n", (pathName + "_2").c_str(),
-                                      numSamples, resolution, abortPosX, endX, abortPosY, endY, abortPosZ, endZ);
+            log << "-p " << (pathName + "_2") << " -n " << numSamples << " -r " << resolution;
+            log << " -x " <<  abortPosX << " -x " << endX << " -y " << abortPosY << " -y " <<  endY;
+            log << " -z " << abortPosZ << " -z " << endZ << std::endl << std::endl;
         }
-        printf("When finished start merge_capability_maps as follows:\n");
-        printf("rosrun capability_map_generator merge_capability_maps -i %s -i %s -o %s\n\n", pathName.c_str(),
-                                                               (pathName + "_2").c_str(), pathName.c_str());
+        log << "When finished start merge_capability_maps as follows:" << std::endl << std::endl;
+        log << "rosrun capability_map_generator merge_capability_maps -i " << pathName;
+        log << " -i " << (pathName + "_2") << " -o " << pathName << std::endl << std::endl;
+    }
+
+    std::cout << log.str() << std::endl;
+
+    if (loggingEnabled)
+    {
+        std::string pathNameLog = pathName + ".build_log";
+        std::ofstream file(pathNameLog.c_str());
+        if (file.is_open())
+        {
+            file << log.str();
+            std::cout << "Written log file to " << pathNameLog << std::endl;
+        }
+        else
+        {
+            std::cout << "Error: Could not open " << pathNameLog << ", no log file written." << std::endl;
+        }
     }
 }
 

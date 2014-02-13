@@ -1,0 +1,16 @@
+<launch>
+    <arg name="pathname"/>
+    <include file="$(find pr2_description)/robots/upload_pr2.launch"/>
+    <include file="$(find pr2_arm_kinematics)/launch/pr2_ik_rarm_node.launch"/>
+
+    <node pkg="capability_map_generator" type="capability_map_generator" name="capability_map_generator" args="-p $(arg pathname) -n 200 -l -r 0.025 -x -0.55 -x 0.85 -y -1.05 -y 0.45 -z -0.75 -z 0.55" output="screen" required="true">
+        <param name="reachability_interface" value="capability_map_generator::ReachabilityROSKinematicsInterface"/>
+        <param name="kinematics_interface" value="pr2_arm_kinematics/PR2ArmKinematicsPlugin"/>
+        <param name="ik_solver_info_service" value="pr2_right_arm_kinematics/get_ik_solver_info" />
+        <param name="group_name" value="right_arm" />
+        <param name="base_name" value="torso_lift_link" />
+        <param name="tip_name" value="r_wrist_roll_link" />
+    </node>
+</launch>
+
+<!-- approximated right_arm bounding box of pr2: -x -0.55 -x 0.85 -y -1.05 -y 0.45 -z -0.75 -z 0.55 -->

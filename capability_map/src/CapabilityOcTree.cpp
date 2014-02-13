@@ -152,7 +152,7 @@ std::vector<octomath::Vector3> CapabilityOcTree::getPositionsWithMinReachablePer
     // loop through all capabilities
     for (CapabilityOcTree::leaf_iterator it = this->begin_leafs(), end = this->end_leafs(); it != end; ++it)
     {
-        if (it->getCapability().getPercentReachable() < percent)
+        if (it->getCapability().getPercentReachable() < percent || it->getCapability().getType() == EMPTY)
         {
             continue;
         }

@@ -122,11 +122,6 @@ Capability ReachabilitySphere::convertToCapability()
         double phi = atan2(eigenVectors[0].y, eigenVectors[0].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[0].z) * 180.0 / M_PI;
 
-        // try to fit a sphere
-        if (conePair.second >= sphereSFE)
-        {
-            retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
-        }
         retCapability = Capability(CONE, phi, theta, conePair.first, conePair.second);
     }
     else if (cylinder_1Pair.second < cylinder_2Pair.second)
@@ -135,11 +130,6 @@ Capability ReachabilitySphere::convertToCapability()
         double phi = atan2(eigenVectors[2].y, eigenVectors[2].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[2].z) * 180.0 / M_PI;
 
-        // try to fit a sphere
-        if (cylinder_1Pair.second >= sphereSFE)
-        {
-            retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
-        }
         retCapability = Capability(CYLINDER_1, phi, theta, cylinder_1Pair.first, cylinder_1Pair.second);
     }
     else
@@ -148,14 +138,14 @@ Capability ReachabilitySphere::convertToCapability()
         double phi = atan2(eigenVectors[0].y, eigenVectors[0].x) * 180.0 / M_PI;
         double theta = acos(eigenVectors[0].z) * 180.0 / M_PI;
 
-        // try to fit a sphere
-        if (cylinder_2Pair.second >= sphereSFE)
-        {
-            retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
-        }
         retCapability = Capability(CYLINDER_2, phi, theta, cylinder_2Pair.first, cylinder_2Pair.second);
     }
 
+    // maybe a sphere fits better
+    if (retCapability.getShapeFitError() >= sphereSFE)
+    {
+        retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
+    }
     return retCapability;
 }
 

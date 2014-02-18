@@ -110,9 +110,6 @@ Capability ReachabilitySphere::convertToCapability()
     // the eigenvector with the smallest eigenvalue is chosen to be the cylinder_2's axis
     std::pair<double, double> cylinder_2Pair = fitCylinder_2(eigenVectors[0]);
 
-    double sphereSFE = 100.0 * (double)_unreachableDirections.size() / (double)_reachableDirections.size();
-    sphereSFE = sphereSFE > 100.0 ? 100.0 : sphereSFE;
-
     Capability retCapability;
 
     // select the shape type with smallest shapeFitError and create a capability (with equal SFE prefer cone)
@@ -139,12 +136,6 @@ Capability ReachabilitySphere::convertToCapability()
         double theta = acos(eigenVectors[0].z) * 180.0 / M_PI;
 
         retCapability = Capability(CYLINDER_2, phi, theta, cylinder_2Pair.first, cylinder_2Pair.second);
-    }
-
-    // maybe a sphere fits better
-    if (retCapability.getShapeFitError() >= sphereSFE)
-    {
-        retCapability = Capability(SPHERE, 0.0, 0.0, 0.0, sphereSFE);
     }
     return retCapability;
 }

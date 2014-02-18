@@ -1,0 +1,45 @@
+Resolution of capability map is: 0.05
+Group name is: left_arm
+Base name is: torso_lift_link
+Tip name is: l_wrist_roll_link
+
+Number of not empty capabilities: 7149
+
+Time passed for native: 4 min 13 sec 108 msec
+Time passed for capability: 0 min 0 sec 690 msec 373 mysec
+
+Number of samples: 1000000
+Number of correct estimated poses: 340478
+Number of not correct estimated poses: 659522
+Correctness of capability map: 34.0478%
+
+Number of true positives: 250920 (relative: 28.3127%, total: 25.092%)
+Number of true negatives: 89558 (relative: 78.7282%, total: 8.9558%)
+Number of false positives: 635324 (relative: 71.6873%, total: 63.5324%)
+Number of false negatives: 24198 (relative: 21.2718%, total: 2.4198%)
+
+Evaluation of getPositionsWithMinReachablePercent():
+Min percent reachable: 0% Count: 7149 Time: 0sec 0 msec 865 mysec
+Min percent reachable: 5% Count: 7149 Time: 0sec 0 msec 864 mysec
+Min percent reachable: 10% Count: 7149 Time: 0sec 0 msec 848 mysec
+Min percent reachable: 15% Count: 7149 Time: 0sec 0 msec 842 mysec
+Min percent reachable: 20% Count: 7149 Time: 0sec 0 msec 842 mysec
+Min percent reachable: 25% Count: 7149 Time: 0sec 0 msec 842 mysec
+Min percent reachable: 30% Count: 7149 Time: 0sec 0 msec 852 mysec
+Min percent reachable: 35% Count: 7149 Time: 0sec 0 msec 842 mysec
+Min percent reachable: 40% Count: 7149 Time: 0sec 0 msec 841 mysec
+Min percent reachable: 45% Count: 7149 Time: 0sec 0 msec 841 mysec
+Min percent reachable: 50% Count: 7149 Time: 0sec 0 msec 841 mysec
+Min percent reachable: 55% Count: 7149 Time: 0sec 0 msec 889 mysec
+Min percent reachable: 60% Count: 7149 Time: 0sec 0 msec 851 mysec
+Min percent reachable: 65% Count: 7149 Time: 0sec 0 msec 849 mysec
+Min percent reachable: 70% Count: 7128 Time: 0sec 0 msec 849 mysec
+Min percent reachable: 75% Count: 6656 Time: 0sec 0 msec 843 mysec
+Min percent reachable: 80% Count: 5879 Time: 0sec 0 msec 834 mysec
+Min percent reachable: 85% Count: 4777 Time: 0sec 0 msec 800 mysec
+Min percent reachable: 90% Count: 3530 Time: 0sec 0 msec 756 mysec
+Min percent reachable: 95% Count: 2024 Time: 0sec 0 msec 714 mysec
+Min percent reachable: 100% Count: 391 Time: 0sec 0 msec 659 mysec
+
+Memory usage of a single node in bytes: 48
+Main memory usage of the complete map in bytes: 660704

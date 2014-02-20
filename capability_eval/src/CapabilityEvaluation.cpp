@@ -210,13 +210,15 @@ int main(int argc, char** argv)
     }
 
     unsigned int numNotEmptyCaps = 0;
+    std::vector<int> shapeFitErrorTable(101, 0);
 
-    // loop through all capabilities and count how much of them are not empty
+    // loop through all capabilities and count how much of them are not empty and create SFE table
     for (CapabilityOcTree::leaf_iterator it = tree->begin_leafs(), end = tree->end_leafs(); it != end; ++it)
     {
         if (it->getCapability().getType() != EMPTY)
         {
             numNotEmptyCaps++;
+            shapeFitErrorTable[int(it->getCapability().getShapeFitError())]++;
         }
     }
 
@@ -265,17 +267,13 @@ int main(int argc, char** argv)
     log << (100.0 * double(numTruePositives + numTrueNegatives) / double(numSamples)) << "%" << std::endl << std::endl;
 
     log << "Number of true positives: " << numTruePositives;
-    log << " (relative: " << 100.0 * double(numTruePositives) / double(numTruePositives + numFalsePositives);
-    log << "%, total: " << 100.0 * double(numTruePositives) / double(numSamples) << "%)" << std::endl;
+    log << " (" << 100.0 * double(numTruePositives) / double(numSamples) << "%)" << std::endl;
     log << "Number of true negatives: " << numTrueNegatives;
-    log << " (relative: " << 100.0 * double(numTrueNegatives) / double(numTrueNegatives + numFalseNegatives);
-    log << "%, total: " << 100.0 * double(numTrueNegatives) / double(numSamples) << "%)" << std::endl;
+    log << " (" << 100.0 * double(numTrueNegatives) / double(numSamples) << "%)" << std::endl;
     log << "Number of false positives: " << numFalsePositives;
-    log << " (relative: " << 100.0 * double(numFalsePositives) / double(numTruePositives + numFalsePositives);
-    log << "%, total: " << 100.0 * double(numFalsePositives) / double(numSamples) << "%)" << std::endl;
+    log << " (" << 100.0 * double(numFalsePositives) / double(numSamples) << "%)" << std::endl;
     log << "Number of false negatives: " << numFalseNegatives;
-    log << " (relative: " << 100.0 * double(numFalseNegatives) / double(numTrueNegatives + numFalseNegatives);
-    log << "%, total: " << 100.0 * double(numFalseNegatives) / double(numSamples) << "%)" << std::endl;
+    log << " (" << 100.0 * double(numFalseNegatives) / double(numSamples) << "%)" << std::endl;
     log << std::endl;
 
     log << "Evaluation of getPositionsWithMinReachablePercent():" << std::endl;
@@ -287,6 +285,18 @@ int main(int argc, char** argv)
         int mSecs = int(numAndTimeMinReachPercent[i].second.toSec() * 1000.0) % 1000;
         int mySecs = int(numAndTimeMinReachPercent[i].second.toSec() * 1000000.0) % 1000;
         log << " Time: " << secs << "sec " << mSecs << " msec " << mySecs << " mysec" << std::endl;
+    }
+    log << std::endl;
+
+    log << "Shape Fit Errors:" << std::endl;
+    for (size_t i = 0; i < shapeFitErrorTable.size(); ++i)
+    {
+        if (shapeFitErrorTable[i] == 0)
+        {
+            continue;
+        }
+        log << "SFE: " << i << " count: " << shapeFitErrorTable[i];
+        log << " (" << 100.0 * double(shapeFitErrorTable[i]) / double(numNotEmptyCaps) << "%)" << std::endl;
     }
     log << std::endl;
 

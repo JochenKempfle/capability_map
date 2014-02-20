@@ -5,41 +5,49 @@ Tip name is: l_wrist_roll_link
 
 Number of not empty capabilities: 907
 
-Time passed for native: 4 min 16 sec 72 msec
-Time passed for capability: 0 min 0 sec 673 msec 675 mysec
+Time passed for native: 3 min 26 sec 483 msec
+Time passed for capability: 0 min 0 sec 664 msec 309 mysec
 
 Number of samples: 1000000
-Number of correct estimated poses: 339550
-Number of not correct estimated poses: 660450
-Correctness of capability map: 33.955%
+Number of correct estimated poses: 894733
+Number of not correct estimated poses: 105267
+Correctness of capability map: 89.4733%
 
-Number of true positives: 246799 (relative: 27.9357%, total: 24.6799%)
-Number of true negatives: 92751 (relative: 79.5832%, total: 9.2751%)
-Number of false positives: 636655 (relative: 72.0643%, total: 63.6655%)
-Number of false negatives: 23795 (relative: 20.4168%, total: 2.3795%)
+Number of true positives: 795982 (79.5982%)
+Number of true negatives: 98751 (9.8751%)
+Number of false positives: 87472 (8.7472%)
+Number of false negatives: 17795 (1.7795%)
 
 Evaluation of getPositionsWithMinReachablePercent():
-Min percent reachable: 0% Count: 907 Time: 0sec 0 msec 153 mysec
+Min percent reachable: 0% Count: 907 Time: 0sec 0 msec 152 mysec
 Min percent reachable: 5% Count: 907 Time: 0sec 0 msec 137 mysec
 Min percent reachable: 10% Count: 907 Time: 0sec 0 msec 135 mysec
 Min percent reachable: 15% Count: 907 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 20% Count: 907 Time: 0sec 0 msec 134 mysec
-Min percent reachable: 25% Count: 907 Time: 0sec 0 msec 134 mysec
-Min percent reachable: 30% Count: 907 Time: 0sec 0 msec 134 mysec
+Min percent reachable: 25% Count: 907 Time: 0sec 0 msec 135 mysec
+Min percent reachable: 30% Count: 907 Time: 0sec 0 msec 135 mysec
 Min percent reachable: 35% Count: 907 Time: 0sec 0 msec 134 mysec
-Min percent reachable: 40% Count: 907 Time: 0sec 0 msec 133 mysec
+Min percent reachable: 40% Count: 907 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 45% Count: 907 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 50% Count: 907 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 55% Count: 907 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 60% Count: 907 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 65% Count: 907 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 70% Count: 902 Time: 0sec 0 msec 134 mysec
-Min percent reachable: 75% Count: 856 Time: 0sec 0 msec 133 mysec
+Min percent reachable: 75% Count: 856 Time: 0sec 0 msec 134 mysec
 Min percent reachable: 80% Count: 737 Time: 0sec 0 msec 132 mysec
-Min percent reachable: 85% Count: 606 Time: 0sec 0 msec 128 mysec
-Min percent reachable: 90% Count: 439 Time: 0sec 0 msec 123 mysec
-Min percent reachable: 95% Count: 258 Time: 0sec 0 msec 119 mysec
+Min percent reachable: 85% Count: 606 Time: 0sec 0 msec 129 mysec
+Min percent reachable: 90% Count: 439 Time: 0sec 0 msec 124 mysec
+Min percent reachable: 95% Count: 258 Time: 0sec 0 msec 120 mysec
 Min percent reachable: 100% Count: 63 Time: 0sec 0 msec 112 mysec
+
+Shape Fit Errors:
+SFE: 0 count: 371 (40.9041%)
+SFE: 1 count: 197 (21.72%)
+SFE: 2 count: 194 (21.3892%)
+SFE: 3 count: 121 (13.3407%)
+SFE: 4 count: 21 (2.31533%)
+SFE: 5 count: 3 (0.330761%)
 
 Memory usage of a single node in bytes: 48
 Main memory usage of the complete map in bytes: 139680

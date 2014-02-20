@@ -5,41 +5,50 @@ Tip name is: r_wrist_roll_link
 
 Number of not empty capabilities: 7142
 
-Time passed for native: 3 min 20 sec 44 msec
-Time passed for capability: 0 min 0 sec 692 msec 308 mysec
+Time passed for native: 3 min 22 sec 569 msec
+Time passed for capability: 0 min 0 sec 692 msec 656 mysec
 
 Number of samples: 1000000
 Number of correct estimated poses: 939132
 Number of not correct estimated poses: 60868
 Correctness of capability map: 93.9132%
 
-Number of true positives: 838775 (relative: 94.6152%, total: 83.8775%)
-Number of true negatives: 100357 (relative: 88.4296%, total: 10.0357%)
-Number of false positives: 47737 (relative: 5.38481%, total: 4.7737%)
-Number of false negatives: 13131 (relative: 11.5704%, total: 1.3131%)
+Number of true positives: 838775 (83.8775%)
+Number of true negatives: 100357 (10.0357%)
+Number of false positives: 47737 (4.7737%)
+Number of false negatives: 13131 (1.3131%)
 
 Evaluation of getPositionsWithMinReachablePercent():
-Min percent reachable: 0% Count: 7142 Time: 0sec 0 msec 940 mysec
-Min percent reachable: 5% Count: 7142 Time: 0sec 0 msec 866 mysec
-Min percent reachable: 10% Count: 7142 Time: 0sec 0 msec 863 mysec
-Min percent reachable: 15% Count: 7142 Time: 0sec 0 msec 862 mysec
-Min percent reachable: 20% Count: 7142 Time: 0sec 0 msec 862 mysec
-Min percent reachable: 25% Count: 7142 Time: 0sec 0 msec 867 mysec
-Min percent reachable: 30% Count: 7142 Time: 0sec 0 msec 862 mysec
-Min percent reachable: 35% Count: 7142 Time: 0sec 0 msec 861 mysec
-Min percent reachable: 40% Count: 7142 Time: 0sec 0 msec 861 mysec
-Min percent reachable: 45% Count: 7142 Time: 0sec 0 msec 871 mysec
-Min percent reachable: 50% Count: 7142 Time: 0sec 0 msec 867 mysec
-Min percent reachable: 55% Count: 7142 Time: 0sec 0 msec 867 mysec
-Min percent reachable: 60% Count: 7142 Time: 0sec 0 msec 867 mysec
-Min percent reachable: 65% Count: 7142 Time: 0sec 0 msec 867 mysec
-Min percent reachable: 70% Count: 7120 Time: 0sec 0 msec 871 mysec
-Min percent reachable: 75% Count: 6652 Time: 0sec 0 msec 858 mysec
-Min percent reachable: 80% Count: 5846 Time: 0sec 0 msec 843 mysec
-Min percent reachable: 85% Count: 4750 Time: 0sec 0 msec 813 mysec
-Min percent reachable: 90% Count: 3522 Time: 0sec 0 msec 766 mysec
-Min percent reachable: 95% Count: 2015 Time: 0sec 0 msec 728 mysec
-Min percent reachable: 100% Count: 361 Time: 0sec 0 msec 670 mysec
+Min percent reachable: 0% Count: 7142 Time: 0sec 0 msec 874 mysec
+Min percent reachable: 5% Count: 7142 Time: 0sec 0 msec 849 mysec
+Min percent reachable: 10% Count: 7142 Time: 0sec 0 msec 860 mysec
+Min percent reachable: 15% Count: 7142 Time: 0sec 0 msec 850 mysec
+Min percent reachable: 20% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 25% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 30% Count: 7142 Time: 0sec 0 msec 853 mysec
+Min percent reachable: 35% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 40% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 45% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 50% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 55% Count: 7142 Time: 0sec 0 msec 852 mysec
+Min percent reachable: 60% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 65% Count: 7142 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 70% Count: 7120 Time: 0sec 0 msec 846 mysec
+Min percent reachable: 75% Count: 6652 Time: 0sec 0 msec 838 mysec
+Min percent reachable: 80% Count: 5846 Time: 0sec 0 msec 839 mysec
+Min percent reachable: 85% Count: 4750 Time: 0sec 0 msec 796 mysec
+Min percent reachable: 90% Count: 3522 Time: 0sec 0 msec 755 mysec
+Min percent reachable: 95% Count: 2015 Time: 0sec 0 msec 717 mysec
+Min percent reachable: 100% Count: 361 Time: 0sec 0 msec 664 mysec
+
+Shape Fit Errors:
+SFE: 0 count: 2822 (39.5127%)
+SFE: 1 count: 1545 (21.6326%)
+SFE: 2 count: 1451 (20.3164%)
+SFE: 3 count: 1007 (14.0997%)
+SFE: 4 count: 298 (4.1725%)
+SFE: 5 count: 17 (0.238029%)
+SFE: 6 count: 2 (0.0280034%)
 
 Memory usage of a single node in bytes: 48
 Main memory usage of the complete map in bytes: 660256

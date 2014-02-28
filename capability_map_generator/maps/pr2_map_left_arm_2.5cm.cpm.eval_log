@@ -42,13 +42,15 @@ Min percent reachable: 95% Count: 14994 Time: 0sec 5 msec 284 mysec
 Min percent reachable: 100% Count: 1968 Time: 0sec 4 msec 759 mysec
 
 Shape Fit Errors:
-SFE: 0 count: 21622 (38.7873%)
-SFE: 1 count: 12516 (22.4522%)
-SFE: 2 count: 11399 (20.4485%)
-SFE: 3 count: 7928 (14.2219%)
-SFE: 4 count: 2116 (3.79586%)
-SFE: 5 count: 162 (0.290609%)
-SFE: 7 count: 2 (0.00358777%)
+SFE: 0 count: 14629 (26.2427%)
+SFE: 1 count: 14141 (25.3673%)
+SFE: 2 count: 11215 (20.1184%)
+SFE: 3 count: 10522 (18.8752%)
+SFE: 4 count: 4521 (8.11014%)
+SFE: 5 count: 694 (1.24495%)
+SFE: 6 count: 21 (0.0376715%)
+SFE: 7 count: 1 (0.00179388%)
+SFE: 8 count: 1 (0.00179388%)
 
 Memory usage of a single node in bytes: 48
 Main memory usage of the complete map in bytes: 4236640

@@ -299,49 +299,8 @@ int main(int argc, char** argv )
     ros::NodeHandle n;
     ros::Rate r(1.0);
 
-    ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("capability_marker", 1, true);
+    ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("capability_marker_array", 1, true);
 
-    // TODO: remove testTree when done debugging (or better create a map with example capabilities)
- /*   CapabilityOcTree testTree(0.1);
-
-    Capability cap0(SPHERE, 0.0, 0.0, 0.0, 0.0);
-    Capability cap1(SPHERE, 0.0, 0.0, 0.0, 10.0);
-    Capability cap2(SPHERE, 0.0, 0.0, 0.0, 20.0);
-    Capability cap3(SPHERE, 0.0, 0.0, 0.0, 30.0);
-    Capability cap4(SPHERE, 0.0, 0.0, 0.0, 40.0);
-    Capability cap5(SPHERE, 0.0, 0.0, 0.0, 50.0);
-    Capability cap6(SPHERE, 0.0, 0.0, 0.0, 60.0);
-    Capability cap7(SPHERE, 0.0, 0.0, 0.0, 70.0);
-    Capability cap8(SPHERE, 0.0, 0.0, 0.0, 80.0);
-    Capability cap9(SPHERE, 0.0, 0.0, 0.0, 90.0);
-    Capability cap10(SPHERE, 0.0, 0.0, 0.0, 100.0);
-
-    Capability cap0;
-    Capability cap1(SPHERE, 0.0, 0.0, 0.0);
-    Capability cap2(CONE, 0.0, 90.0, 10.0);
-    Capability cap3(CONE, 90.0, 0.0, 45.0);
-    Capability cap4(CONE, 40.0, 20.0, 100.0);
-    Capability cap5(CONE, 180.0, 120.0, 70.0);
-    Capability cap6(CYLINDER_1, 0.0, 0.0, 10.0);
-    Capability cap7(CYLINDER_1, 0.0, 0.0, 90.0);
-    Capability cap8(CYLINDER_1, 40.0, 50.0, 45.0);
-    Capability cap9(CYLINDER_2, 0.0, 0.0, 10.0);
-    Capability cap10(CYLINDER_2, 0.0, 0.0, 45.0);
-    Capability cap11(CYLINDER_2, 90.0, 90.0, 89.0);
-
-    testTree.setNodeCapability(0.0, 0.0, 1.0, cap0);
-    testTree.setNodeCapability(0.2, 0.0, 1.0, cap1);
-    testTree.setNodeCapability(0.4, 0.0, 1.0, cap2);
-    testTree.setNodeCapability(0.6, 0.0, 1.0, cap3);
-    testTree.setNodeCapability(0.8, 0.0, 1.0, cap4);
-    testTree.setNodeCapability(1.0, 0.0, 1.0, cap5);
-    testTree.setNodeCapability(1.2, 0.0, 1.0, cap6);
-    testTree.setNodeCapability(1.4, 0.0, 1.0, cap7);
-    testTree.setNodeCapability(1.6, 0.0, 1.0, cap8);
-    testTree.setNodeCapability(1.8, 0.0, 1.0, cap9);
-    testTree.setNodeCapability(2.0, 0.0, 1.0, cap10);
-    //testTree.setNodeCapability(2.2, 0.0, 1.0, cap11);
-*/
     // remember the greatest extent in y-direction to properly set the color table outside of the capabilities
     double maxY = 0.0;
 
@@ -349,56 +308,7 @@ int main(int argc, char** argv )
     {
         unsigned int count = 0;
         visualization_msgs::MarkerArray markerArray;
-/*        for(CapabilityOcTree::leaf_iterator it = testTree.begin_leafs(), end = testTree.end_leafs(); it != end; ++it)
-        {
-            visualization_msgs::Marker marker;
 
-            marker.header.frame_id = "/torso_lift_link";
-            marker.header.stamp = ros::Time::now();
-
-            marker.ns = "capability_shapes";
-            marker.id = count++;
-
-            marker.action = visualization_msgs::Marker::ADD;
-            marker.lifetime = ros::Duration();
-
-            if (!getMarkerFromCapIterator(&marker, it))
-            {
-                continue;
-            }
-            // push the marker into array
-            markerArray.markers.push_back(marker);
-/*
-            // draw a cube around the capability marker to see the volume
-            visualization_msgs::Marker cubeMarker;
-
-            cubeMarker.header.frame_id = "/base_link";
-            cubeMarker.header.stamp = ros::Time::now();
-
-            cubeMarker.ns = "capability_shapes";
-            cubeMarker.id = count++;
-
-            cubeMarker.action = visualization_msgs::Marker::ADD;
-            cubeMarker.lifetime = ros::Duration();
-
-            cubeMarker.type = visualization_msgs::Marker::CUBE;
-
-            cubeMarker.color.r = 1.0;
-            cubeMarker.color.g = 1.0;
-            cubeMarker.color.b = 1.0;
-            cubeMarker.color.a = 0.2;
-
-            cubeMarker.pose.position.x = it.getX();
-            cubeMarker.pose.position.y = it.getY();
-            cubeMarker.pose.position.z = it.getZ();
-
-            cubeMarker.scale.x = it.getSize();
-            cubeMarker.scale.y = it.getSize();
-            cubeMarker.scale.z = it.getSize();
-
-            // Publish the marker
-            marker_pub.publish(cubeMarker);
-        }*/
         // loop through all capabilities
         for (CapabilityOcTree::leaf_iterator it = tree->begin_leafs(), end = tree->end_leafs(); it != end; ++it)
         {
@@ -422,7 +332,7 @@ int main(int argc, char** argv )
             marker.header.frame_id = frame;
             marker.header.stamp = ros::Time(0);
 
-            marker.ns = "capability_shapes";
+            marker.ns = tree->getGroupName();
             marker.id = count++;
 
             marker.action = visualization_msgs::Marker::ADD;
@@ -498,7 +408,7 @@ int main(int argc, char** argv )
 
                 marker.action = visualization_msgs::Marker::ADD;
                 marker.lifetime = ros::Duration();
-                
+
                 marker.type = visualization_msgs::Marker::CUBE;
 
                 marker.pose.position.x = 0.05 * (double)i;

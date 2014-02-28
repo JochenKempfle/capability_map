@@ -129,10 +129,5 @@ bool ReachabilityROSKinematicsInterface::isReachable(const octomath::Pose6D &pos
     return kinematics->searchPositionIK(ikPose, seed, 0.5, sol, err);
 }
 
-ReachabilityInterface::BoundingBox ReachabilityROSKinematicsInterface::getBoundingBox() const
-{
-    return ReachabilityInterface::BoundingBox(Vector(0.0, 0.0, 0.0), Vector(0.9, -0.9, 0.0));
-}
-
-}
+} // namespace
 

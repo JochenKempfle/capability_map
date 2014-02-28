@@ -14,7 +14,6 @@ class ReachabilityROSKinematicsInterface : public ReachabilityInterface
     ReachabilityROSKinematicsInterface();
 
     bool isReachable(const octomath::Pose6D &pose) const;
-    ReachabilityInterface::BoundingBox getBoundingBox() const;
 
   private:
     boost::shared_ptr<kinematics::KinematicsBase> kinematics;

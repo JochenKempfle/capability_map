@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <cmath>
 #include "capability_map_generator/ReachabilityInterface.h"
 #include "capability_map/CapabilityOcTree.h"
 
@@ -218,7 +219,7 @@ int main(int argc, char** argv)
         if (it->getCapability().getType() != EMPTY)
         {
             numNotEmptyCaps++;
-            shapeFitErrorTable[int(it->getCapability().getShapeFitError())]++;
+            shapeFitErrorTable[int(round(it->getCapability().getShapeFitError()))]++;
         }
     }
 

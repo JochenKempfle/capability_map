@@ -12,49 +12,49 @@ namespace capability_map_generator
 bool ReachabilityDummyInterface::isReachable(const octomath::Pose6D &pose) const
 {
     Capability cap;
-    if (pose.y() > -0.05 && pose.y() < 0.05 && pose.z() > 0.45 && pose.z() < 0.55)
+    if (pose.y() > 0.04 && pose.y() < 0.06 && pose.z() > 0.44 && pose.z() < 0.46)
     {
-        if (pose.x() > 0.15 && pose.x() < 0.25)
+        if (pose.x() > 0.14 && pose.x() < 0.16)
         {
             cap = Capability(SPHERE, 0.0, 0.0, 0.0);
         }
-        else if (pose.x() > 0.35 && pose.x() < 0.45)
+        else if (pose.x() > 0.34 && pose.x() < 0.36)
         {
-            cap = Capability(CONE, 0.0, 90.0, 10.0);
+            cap = Capability(CONE, 0.0, 90.0, 15.0);
         }
-        else if (pose.x() > 0.55 && pose.x() < 0.65)
+        else if (pose.x() > 0.54 && pose.x() < 0.56)
         {
             cap = Capability(CONE, 90.0, 0.0, 45.0);
         }
-        else if (pose.x() > 0.75 && pose.x() < 0.85)
+        else if (pose.x() > 0.74 && pose.x() < 0.76)
         {
-            cap = Capability(CONE, 40.0, 20.0, 100.0);
+            cap = Capability(CONE, 90.0, 0.0, 125.0);
         }
-        else if (pose.x() > 0.95 && pose.x() < 1.05)
+        else if (pose.x() > 0.94 && pose.x() < 0.96)
         {
             cap = Capability(CONE, 180.0, 120.0, 70.0);
         }
-        else if (pose.x() > 1.15 && pose.x() < 1.25)
+        else if (pose.x() > 1.14 && pose.x() < 1.16)
         {
             cap = Capability(CYLINDER_1, 0.0, 0.0, 10.0);
         }
-        else if (pose.x() > 1.35 && pose.x() < 1.45)
+        else if (pose.x() > 1.34 && pose.x() < 1.36)
         {
             cap = Capability(CYLINDER_1, 0.0, 0.0, 90.0);
         }
-        else if (pose.x() > 1.55 && pose.x() < 1.65)
+        else if (pose.x() > 1.54 && pose.x() < 1.56)
         {
             cap = Capability(CYLINDER_1, 40.0, 50.0, 45.0);
         }
-        else if (pose.x() > 1.75 && pose.x() < 1.85)
+        else if (pose.x() > 1.74 && pose.x() < 1.76)
         {
             cap = Capability(CYLINDER_2, 0.0, 0.0, 10.0);
         }
-        else if (pose.x() > 1.95 && pose.x() < 2.05)
+        else if (pose.x() > 1.94 && pose.x() < 1.96)
         {
             cap = Capability(CYLINDER_2, 0.0, 0.0, 45.0);
         }
-        else if (pose.x() > 2.15 && pose.x() < 2.25)
+        else if (pose.x() > 2.14 && pose.x() < 2.16)
         {
             cap = Capability(CYLINDER_2, 90.0, 90.0, 89.0);
         }
@@ -77,10 +77,6 @@ bool ReachabilityDummyInterface::isReachable(const octomath::Pose6D &pose) const
     return cap.isDirectionPossible(phi, theta);
 }
 
-ReachabilityInterface::BoundingBox ReachabilityDummyInterface::getBoundingBox() const
-{
-    return ReachabilityInterface::BoundingBox(Vector(2.3, 0.1, 0.7), Vector(-0.1, -0.1, 0.3));
-}
+} // namespace
 
-}
 

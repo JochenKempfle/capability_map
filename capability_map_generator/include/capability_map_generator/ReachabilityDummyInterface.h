@@ -10,7 +10,6 @@ class ReachabilityDummyInterface : public ReachabilityInterface
 {
   public:
     bool isReachable(const octomath::Pose6D &pose) const;
-    ReachabilityInterface::BoundingBox getBoundingBox() const;
 };
 
 }
